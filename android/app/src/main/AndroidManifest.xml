@@ -4,10 +4,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:theme="@style/AppTheme"
-        android:label="Bovarea"
-        android:usesCleartextTraffic="false"
-        android:resizeableActivity="true">
+    android:theme="@style/AppTheme"
+    android:label="Bovarea"
+    android:icon="bovarea_icon"
+    android:usesCleartextTraffic="false"
+    android:resizeableActivity="true">
 
         <activity
             android:name=".MainActivity"
