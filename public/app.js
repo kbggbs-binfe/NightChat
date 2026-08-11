@@ -91,7 +91,6 @@ chatForm.addEventListener("submit", (event) => {
 
 socket.addEventListener("open", () => {
   setConnected(true);
-  addSystemMessage("Connected to the server.");
 });
 
 socket.addEventListener("message", (event) => {
