@@ -33,7 +33,9 @@ const server = http.createServer((req, res) => {
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
-      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+      res.writeHead(404, {
+        "Content-Type": "text/plain; charset=utf-8"
+      });
       return res.end("Not found");
     }
 
@@ -49,6 +51,9 @@ const server = http.createServer((req, res) => {
 
 const wss = new WebSocket.Server({ server });
 const clients = new Map();
+
+const recentMessages = [];
+const HISTORY_DURATION = 60 * 1000;
 
 function broadcast(payload, except = null) {
   const message = JSON.stringify(payload);
@@ -73,6 +78,38 @@ function broadcastUserList() {
     count: users.length,
     users
   });
+}
+
+function cleanOldMessages() {
+  const cutoff = Date.now() - HISTORY_DURATION;
+
+  while (
+    recentMessages.length > 0 &&
+    recentMessages[0].time < cutoff
+  ) {
+    recentMessages.shift();
+  }
+}
+
+function addRecentMessage(sender, message, time) {
+  cleanOldMessages();
+
+  recentMessages.push({
+    sender,
+    message,
+    time
+  });
+}
+
+function sendRecentMessages(socket) {
+  cleanOldMessages();
+
+  if (recentMessages.length === 0) return;
+
+  socket.send(JSON.stringify({
+    type: "history",
+    messages: recentMessages
+  }));
 }
 
 wss.on("connection", (socket) => {
@@ -106,6 +143,8 @@ wss.on("connection", (socket) => {
         message: `Welcome, ${username}.`
       }));
 
+      sendRecentMessages(socket);
+
       broadcast({
         type: "system",
         message: `${username} joined the chat.`
@@ -124,12 +163,15 @@ wss.on("connection", (socket) => {
       if (!message) return;
 
       const sender = clients.get(socket) || "Anonymous";
+      const time = Date.now();
+
+      addRecentMessage(sender, message, time);
 
       broadcast({
         type: "chat",
         sender,
         message,
-        time: new Date().toISOString()
+        time: new Date(time).toISOString()
       }, socket);
 
       // Echo back to the sender too.
@@ -137,7 +179,7 @@ wss.on("connection", (socket) => {
         type: "chat",
         sender,
         message,
-        time: new Date().toISOString(),
+        time: new Date(time).toISOString(),
         self: true
       }));
     }
