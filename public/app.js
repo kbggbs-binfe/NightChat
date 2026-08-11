@@ -19,7 +19,20 @@ let joined = false;
 
 const savedUsername = localStorage.getItem("bovarea_username");
 
-function addMessageToChat(sender, message, self = false) {
+function formatTime(timestamp) {
+  if (!timestamp) return "";
+
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function addMessageToChat(sender, message, time, self = false) {
   const wrapper = document.createElement("div");
   wrapper.className = self ? "message self" : "message";
 
@@ -33,6 +46,14 @@ function addMessageToChat(sender, message, self = false) {
 
   wrapper.appendChild(senderElement);
   wrapper.appendChild(textElement);
+
+  if (time) {
+    const timeElement = document.createElement("div");
+    timeElement.className = "message-time";
+    timeElement.textContent = formatTime(time);
+    wrapper.appendChild(timeElement);
+  }
+
   chatWindow.appendChild(wrapper);
 
   chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -159,7 +180,12 @@ socket.addEventListener("message", (event) => {
   }
 
   if (data.type === "chat") {
-    addMessageToChat(data.sender, data.message, Boolean(data.self));
+    addMessageToChat(
+      data.sender,
+      data.message,
+      data.time,
+      Boolean(data.self)
+    );
   }
 });
 
