@@ -105,7 +105,7 @@ wss.on("connection", (socket) => {
         sender,
         message,
         time: new Date().toISOString()
-      });
+      }, socket);
 
       // Echo back to the sender too.
       socket.send(JSON.stringify({
