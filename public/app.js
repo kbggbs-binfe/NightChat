@@ -17,6 +17,8 @@ const socket = new WebSocket(serverUrl);
 
 let joined = false;
 
+const savedUsername = localStorage.getItem("bovarea_username");
+
 function addMessageToChat(sender, message, self = false) {
   const wrapper = document.createElement("div");
   wrapper.className = self ? "message self" : "message";
@@ -84,14 +86,16 @@ function updateOnlineUsers(users, count) {
   }
 }
 
-joinButton.addEventListener("click", () => {
-  const name = nameInput.value.trim();
+function joinChat(name) {
+  const username = String(name || "").trim().slice(0, 24);
 
-  if (!name || socket.readyState !== WebSocket.OPEN) return;
+  if (!username || socket.readyState !== WebSocket.OPEN) return;
+
+  localStorage.setItem("bovarea_username", username);
 
   socket.send(JSON.stringify({
     type: "join",
-    name
+    name: username
   }));
 
   joined = true;
@@ -99,6 +103,10 @@ joinButton.addEventListener("click", () => {
   messageInput.disabled = false;
   sendButton.disabled = false;
   messageInput.focus();
+}
+
+joinButton.addEventListener("click", () => {
+  joinChat(nameInput.value);
 });
 
 nameInput.addEventListener("keydown", (event) => {
@@ -125,6 +133,11 @@ chatForm.addEventListener("submit", (event) => {
 
 socket.addEventListener("open", () => {
   setConnected(true);
+
+  if (savedUsername) {
+    nameInput.value = savedUsername;
+    joinChat(savedUsername);
+  }
 });
 
 socket.addEventListener("message", (event) => {
