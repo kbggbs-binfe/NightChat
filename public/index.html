@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NightChat</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div>
+        <h1>NightChat</h1>
+        <p id="status">Connecting...</p>
+      </div>
+      <div class="online-dot" id="onlineDot"></div>
+    </header>
+
+    <section class="name-panel" id="namePanel">
+      <label for="nameInput">Choose a username</label>
+      <div class="name-row">
+        <input id="nameInput" maxlength="24" placeholder="Your name">
+        <button id="joinButton">Join</button>
+      </div>
+    </section>
+
+    <section class="chat-window" id="chat-window" aria-live="polite"></section>
+
+    <form class="composer" id="chatForm">
+      <input
+        id="message-input"
+        maxlength="500"
+        autocomplete="off"
+        placeholder="Type a message..."
+        disabled
+      >
+      <button id="send-button" type="submit" disabled>Send</button>
+    </form>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

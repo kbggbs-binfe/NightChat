@@ -1,0 +1,178 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at top, #193f46 0%, transparent 42%),
+    #071316;
+  color: #e9f3f3;
+}
+
+.app {
+  width: min(720px, 94vw);
+  height: min(760px, 92vh);
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  overflow: hidden;
+  background: rgba(9, 24, 27, 0.96);
+  border: 1px solid rgba(135, 201, 205, 0.18);
+  border-radius: 24px;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px;
+  border-bottom: 1px solid rgba(135, 201, 205, 0.12);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+}
+
+.header p {
+  margin: 5px 0 0;
+  color: #8fa9ac;
+  font-size: 13px;
+}
+
+.online-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #657174;
+  box-shadow: 0 0 12px rgba(100, 130, 130, 0.4);
+}
+
+.online-dot.connected {
+  background: #65d18b;
+  box-shadow: 0 0 14px rgba(101, 209, 139, 0.65);
+}
+
+.name-panel {
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(135, 201, 205, 0.12);
+}
+
+.name-panel label {
+  display: block;
+  margin-bottom: 8px;
+  color: #9db5b7;
+  font-size: 13px;
+}
+
+.name-row {
+  display: flex;
+  gap: 10px;
+}
+
+input,
+button {
+  font: inherit;
+}
+
+input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid rgba(135, 201, 205, 0.18);
+  border-radius: 12px;
+  outline: none;
+  background: #0d2023;
+  color: #eefafa;
+  padding: 12px 14px;
+}
+
+input:focus {
+  border-color: #69aeb2;
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  padding: 0 18px;
+  background: #8bc4c7;
+  color: #061113;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.chat-window {
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.message {
+  width: fit-content;
+  max-width: 82%;
+  margin: 0 0 12px;
+  padding: 11px 14px;
+  border-radius: 15px;
+  background: #112a2e;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.message.self {
+  margin-left: auto;
+  background: #23575b;
+}
+
+.sender {
+  margin-bottom: 3px;
+  color: #9bc9cb;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.text {
+  font-size: 14px;
+}
+
+.system {
+  margin: 10px auto;
+  text-align: center;
+  color: #718c8f;
+  font-size: 12px;
+}
+
+.composer {
+  display: flex;
+  gap: 10px;
+  padding: 16px;
+  border-top: 1px solid rgba(135, 201, 205, 0.12);
+}
+
+.composer input {
+  flex: 1;
+}
+
+@media (max-width: 600px) {
+  .app {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+}
