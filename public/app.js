@@ -154,6 +154,13 @@ socket.addEventListener("close", () => {
   setConnected(false);
   messageInput.disabled = true;
   sendButton.disabled = true;
+
+  const onlinePanel = document.getElementById("onlinePanel");
+
+  if (onlinePanel) {
+    onlinePanel.remove();
+  }
+
   addSystemMessage("Connection closed.");
 });
 
