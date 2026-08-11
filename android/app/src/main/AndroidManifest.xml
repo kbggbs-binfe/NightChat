@@ -6,7 +6,7 @@
     <application
     android:theme="@style/AppTheme"
     android:label="Bovarea"
-    android:icon="bovarea_icon"
+    android:icon="@drawable/bovarea_icon"
     android:usesCleartextTraffic="false"
     android:resizeableActivity="true">
 
