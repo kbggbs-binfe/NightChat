@@ -38,9 +38,11 @@ const server = http.createServer((req, res) => {
     }
 
     const ext = path.extname(filePath).toLowerCase();
+
     res.writeHead(200, {
       "Content-Type": mimeTypes[ext] || "application/octet-stream"
     });
+
     res.end(data);
   });
 });
@@ -56,6 +58,21 @@ function broadcast(payload, except = null) {
       socket.send(message);
     }
   }
+}
+
+function getOnlineUsers() {
+  return Array.from(clients.values())
+    .filter((username) => username !== "Anonymous");
+}
+
+function broadcastUserList() {
+  const users = getOnlineUsers();
+
+  broadcast({
+    type: "users",
+    count: users.length,
+    users
+  });
 }
 
 wss.on("connection", (socket) => {
@@ -76,7 +93,10 @@ wss.on("connection", (socket) => {
     }
 
     if (data.type === "join") {
-      const name = String(data.name || "Anonymous").trim().slice(0, 24);
+      const name = String(data.name || "Anonymous")
+        .trim()
+        .slice(0, 24);
+
       const username = name || "Anonymous";
 
       clients.set(socket, username);
@@ -91,11 +111,16 @@ wss.on("connection", (socket) => {
         message: `${username} joined the chat.`
       }, socket);
 
+      broadcastUserList();
+
       return;
     }
 
     if (data.type === "chat") {
-      const message = String(data.message || "").trim().slice(0, 500);
+      const message = String(data.message || "")
+        .trim()
+        .slice(0, 500);
+
       if (!message) return;
 
       const sender = clients.get(socket) || "Anonymous";
@@ -120,6 +145,7 @@ wss.on("connection", (socket) => {
 
   socket.on("close", () => {
     const username = clients.get(socket);
+
     clients.delete(socket);
 
     if (username && username !== "Anonymous") {
@@ -127,6 +153,8 @@ wss.on("connection", (socket) => {
         type: "system",
         message: `${username} left the chat.`
       });
+
+      broadcastUserList();
     }
   });
 
