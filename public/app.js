@@ -68,6 +68,14 @@ function addSystemMessage(message) {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
+function addHistoryDivider() {
+  const element = document.createElement("div");
+  element.className = "history-divider";
+  element.textContent = "While you were away";
+
+  chatWindow.appendChild(element);
+}
+
 function setConnected(connected) {
   onlineDot.classList.toggle("connected", connected);
   status.textContent = connected ? "Connected" : "Disconnected";
@@ -177,6 +185,21 @@ socket.addEventListener("message", (event) => {
 
   if (data.type === "users") {
     updateOnlineUsers(data.users, data.count);
+  }
+
+  if (data.type === "history") {
+    if (Array.isArray(data.messages) && data.messages.length > 0) {
+      addHistoryDivider();
+
+      data.messages.forEach((message) => {
+        addMessageToChat(
+          message.sender,
+          message.message,
+          message.time,
+          message.sender === savedUsername
+        );
+      });
+    }
   }
 
   if (data.type === "chat") {
