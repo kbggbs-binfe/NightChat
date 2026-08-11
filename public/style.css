@@ -214,6 +214,24 @@ button:disabled {
   font-size: 9px;
 }
 
+.history-divider {
+  margin: 16px auto 12px;
+  text-align: center;
+  color: #718292;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+
+.history-divider::before,
+.history-divider::after {
+  content: "";
+  display: inline-block;
+  width: 35px;
+  height: 1px;
+  margin: 0 8px 3px;
+  background: #172331;
+}
+
 .system {
   margin: 8px auto;
   text-align: center;
