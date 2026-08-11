@@ -207,6 +207,13 @@ button:disabled {
   color: #e8f4fc;
 }
 
+.message-time {
+  margin-top: 4px;
+  text-align: right;
+  color: #536372;
+  font-size: 9px;
+}
+
 .system {
   margin: 8px auto;
   text-align: center;
