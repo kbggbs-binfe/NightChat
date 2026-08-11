@@ -50,6 +50,40 @@ function setConnected(connected) {
   status.textContent = connected ? "Connected" : "Disconnected";
 }
 
+function updateOnlineUsers(users, count) {
+  let onlinePanel = document.getElementById("onlinePanel");
+
+  if (!onlinePanel) {
+    onlinePanel = document.createElement("div");
+    onlinePanel.id = "onlinePanel";
+    onlinePanel.className = "online-panel";
+
+    document.querySelector(".header").appendChild(onlinePanel);
+  }
+
+  onlinePanel.innerHTML = "";
+
+  const countElement = document.createElement("div");
+  countElement.className = "online-count";
+  countElement.textContent = `${count} online`;
+
+  onlinePanel.appendChild(countElement);
+
+  if (count > 0) {
+    const usersElement = document.createElement("div");
+    usersElement.className = "online-users";
+
+    users.forEach((username) => {
+      const userElement = document.createElement("div");
+      userElement.className = "online-user";
+      userElement.textContent = `● ${username}`;
+      usersElement.appendChild(userElement);
+    });
+
+    onlinePanel.appendChild(usersElement);
+  }
+}
+
 joinButton.addEventListener("click", () => {
   const name = nameInput.value.trim();
 
@@ -105,6 +139,10 @@ socket.addEventListener("message", (event) => {
 
   if (data.type === "system") {
     addSystemMessage(data.message);
+  }
+
+  if (data.type === "users") {
+    updateOnlineUsers(data.users, data.count);
   }
 
   if (data.type === "chat") {
