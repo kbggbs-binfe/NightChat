@@ -52,6 +52,13 @@ body {
   font-size: 12px;
 }
 
+.tagline {
+  margin: 3px 0 2px;
+  color: #8b9aaa;
+  font-size: 11px;
+  letter-spacing: 0.2px;
+}
+
 .online-dot {
   width: 9px;
   height: 9px;
