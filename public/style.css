@@ -269,6 +269,48 @@ button:disabled {
   font-size: 18px;
 }
 
+.reaction-bar {
+  display: flex;
+  gap: 3px;
+  margin-top: 6px;
+  opacity: 0.75;
+}
+
+.reaction-button {
+  width: 28px;
+  height: 25px;
+  padding: 0;
+  border: 1px solid #172b3d;
+  border-radius: 7px;
+  background: #06111c;
+  color: #c9e8ff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.reaction-button:hover {
+  background: #0b1a29;
+}
+
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.reaction {
+  width: auto;
+  height: 23px;
+  padding: 0 7px;
+  border: 1px solid #17344b;
+  border-radius: 10px;
+  background: #0b1a29;
+  color: #c9e8ff;
+  font-size: 11px;
+  cursor: pointer;
+}
+
 @media (max-width: 600px) {
   .app {
     width: 100vw;
