@@ -16,10 +16,11 @@ const serverUrl = `${protocol}://${location.host}`;
 const socket = new WebSocket(serverUrl);
 
 let joined = false;
+let replyTarget = null;
 
 const savedUsername = localStorage.getItem("bovarea_username");
 
-const reactionOptions = ["👍", "❤️", "😂", "😭", "🙏", "🥀"];
+const reactionOptions = ["👍", "❤️", "😂", "😮", "😢", "💀"];
 
 function formatTime(timestamp) {
   if (!timestamp) return "";
@@ -32,6 +33,79 @@ function formatTime(timestamp) {
     hour: "numeric",
     minute: "2-digit"
   });
+}
+
+function setReplyTarget(replyData) {
+  replyTarget = replyData;
+
+  let replyPreview = document.getElementById("replyPreview");
+
+  if (!replyPreview) {
+    replyPreview = document.createElement("div");
+    replyPreview.id = "replyPreview";
+    replyPreview.className = "reply-preview";
+
+    const composer = document.querySelector(".composer");
+    composer.insertBefore(replyPreview, composer.firstChild);
+  }
+
+  replyPreview.innerHTML = "";
+
+  const content = document.createElement("div");
+  content.className = "reply-preview-content";
+
+  const title = document.createElement("div");
+  title.className = "reply-preview-title";
+  title.textContent = `Replying to ${replyData.sender}`;
+
+  const message = document.createElement("div");
+  message.className = "reply-preview-message";
+  message.textContent = replyData.message;
+
+  content.appendChild(title);
+  content.appendChild(message);
+
+  const cancelButton = document.createElement("button");
+  cancelButton.type = "button";
+  cancelButton.className = "reply-cancel";
+  cancelButton.textContent = "×";
+
+  cancelButton.addEventListener("click", cancelReply);
+
+  replyPreview.appendChild(content);
+  replyPreview.appendChild(cancelButton);
+
+  messageInput.focus();
+}
+
+function cancelReply() {
+  replyTarget = null;
+
+  const replyPreview = document.getElementById("replyPreview");
+
+  if (replyPreview) {
+    replyPreview.remove();
+  }
+}
+
+function addReplyPreview(wrapper, replyTo) {
+  if (!replyTo) return;
+
+  const replyElement = document.createElement("div");
+  replyElement.className = "message-reply";
+
+  const replySender = document.createElement("div");
+  replySender.className = "message-reply-sender";
+  replySender.textContent = replyTo.sender;
+
+  const replyText = document.createElement("div");
+  replyText.className = "message-reply-text";
+  replyText.textContent = replyTo.message;
+
+  replyElement.appendChild(replySender);
+  replyElement.appendChild(replyText);
+
+  wrapper.appendChild(replyElement);
 }
 
 function createReactionBar(messageId) {
@@ -107,7 +181,8 @@ function addMessageToChat(
   time,
   self = false,
   messageId = "",
-  reactions = {}
+  reactions = {},
+  replyTo = null
 ) {
   const wrapper = document.createElement("div");
 
@@ -126,6 +201,9 @@ function addMessageToChat(
   textElement.textContent = message;
 
   wrapper.appendChild(senderElement);
+
+  addReplyPreview(wrapper, replyTo);
+
   wrapper.appendChild(textElement);
 
   if (time) {
@@ -138,6 +216,16 @@ function addMessageToChat(
   if (messageId) {
     const reactionBar = createReactionBar(messageId);
     wrapper.appendChild(reactionBar);
+
+    wrapper.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+
+      setReplyTarget({
+        id: messageId,
+        sender,
+        message
+      });
+    });
   }
 
   if (reactions) {
@@ -243,10 +331,12 @@ chatForm.addEventListener("submit", (event) => {
 
   socket.send(JSON.stringify({
     type: "chat",
-    message
+    message,
+    replyTo: replyTarget ? replyTarget.id : null
   }));
 
   messageInput.value = "";
+  cancelReply();
   messageInput.focus();
 });
 
@@ -288,7 +378,8 @@ socket.addEventListener("message", (event) => {
           message.time,
           message.sender === savedUsername,
           message.id,
-          message.reactions
+          message.reactions,
+          message.replyTo
         );
       });
     }
@@ -301,7 +392,8 @@ socket.addEventListener("message", (event) => {
       data.time,
       Boolean(data.self),
       data.id,
-      data.reactions
+      data.reactions,
+      data.replyTo
     );
   }
 
