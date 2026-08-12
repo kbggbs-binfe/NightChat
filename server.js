@@ -22,7 +22,6 @@ const server = http.createServer((req, res) => {
 
   if (requestedPath === "/") requestedPath = "/index.html";
 
-  // Prevent path traversal.
   const safePath = path.normalize(requestedPath).replace(/^(\.\.[/\\])+/, "");
   const filePath = path.join(publicDir, safePath);
 
@@ -87,24 +86,32 @@ function cleanOldMessages() {
 
   while (
     recentMessages.length > 0 &&
-    recentMessages[0].time < cutoff
+    new Date(recentMessages[0].time).getTime() < cutoff
   ) {
     recentMessages.shift();
   }
 }
 
-function addRecentMessage(sender, message, time) {
+function addRecentMessage(
+  sender,
+  message,
+  time,
+  replyTo = null
+) {
   cleanOldMessages();
 
-  recentMessages.push({
+  const chatMessage = {
     id: `${time}-${Math.random().toString(36).slice(2, 10)}`,
     sender,
     message,
     time: new Date(time).toISOString(),
-    reactions: {}
-  });
+    reactions: {},
+    replyTo
+  };
 
-  return recentMessages[recentMessages.length - 1];
+  recentMessages.push(chatMessage);
+
+  return chatMessage;
 }
 
 function sendRecentMessages(socket) {
@@ -171,10 +178,27 @@ wss.on("connection", (socket) => {
       const sender = clients.get(socket) || "Anonymous";
       const time = Date.now();
 
+      let replyTo = null;
+
+      if (data.replyTo) {
+        const repliedMessage = recentMessages.find(
+          (item) => item.id === data.replyTo
+        );
+
+        if (repliedMessage) {
+          replyTo = {
+            id: repliedMessage.id,
+            sender: repliedMessage.sender,
+            message: repliedMessage.message
+          };
+        }
+      }
+
       const chatMessage = addRecentMessage(
         sender,
         message,
-        time
+        time,
+        replyTo
       );
 
       broadcast({
@@ -183,10 +207,10 @@ wss.on("connection", (socket) => {
         sender: chatMessage.sender,
         message: chatMessage.message,
         time: chatMessage.time,
-        reactions: chatMessage.reactions
+        reactions: chatMessage.reactions,
+        replyTo: chatMessage.replyTo
       }, socket);
 
-      // Echo back to the sender too.
       socket.send(JSON.stringify({
         type: "chat",
         id: chatMessage.id,
@@ -194,6 +218,7 @@ wss.on("connection", (socket) => {
         message: chatMessage.message,
         time: chatMessage.time,
         reactions: chatMessage.reactions,
+        replyTo: chatMessage.replyTo,
         self: true
       }));
 
@@ -222,7 +247,6 @@ wss.on("connection", (socket) => {
       }
 
       const users = message.reactions[reaction];
-
       const existingIndex = users.indexOf(username);
 
       if (existingIndex !== -1) {
