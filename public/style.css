@@ -58,6 +58,35 @@ body {
   letter-spacing: 0.2px;
 }
 
+/* Header controls */
+
+.header-right {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.change-name-button {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid #172b3d;
+  border-radius: 7px;
+  background: transparent;
+  color: #718292;
+  font-size: 9px;
+  font-weight: 500;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.change-name-button:hover {
+  color: #c9e8ff;
+  border-color: #29445b;
+  background: #06111c;
+  opacity: 1;
+}
+
 .online-dot {
   width: 9px;
   height: 9px;
@@ -453,6 +482,16 @@ button:disabled {
 
   .header {
     padding: 15px;
+  }
+
+  .header-right {
+    gap: 8px;
+  }
+
+  .change-name-button {
+    height: 23px;
+    padding: 0 6px;
+    font-size: 8px;
   }
 
   .chat-window {
