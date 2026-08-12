@@ -61,6 +61,8 @@ body {
 /* Header controls */
 
 .header-right {
+  position: relative;
+  z-index: 30;
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -68,16 +70,19 @@ body {
 }
 
 .change-name-button {
+  position: relative;
+  z-index: 31;
   height: 24px;
   padding: 0 8px;
   border: 1px solid #172b3d;
   border-radius: 7px;
-  background: transparent;
+  background: #03070c;
   color: #718292;
   font-size: 9px;
   font-weight: 500;
   cursor: pointer;
   opacity: 0.75;
+  pointer-events: auto;
 }
 
 .change-name-button:hover {
@@ -301,6 +306,55 @@ button:disabled {
   align-self: flex-end;
 }
 
+/* Change username panel */
+
+.name-change-panel {
+  display: none;
+  padding: 14px 20px;
+  border-bottom: 1px solid #101923;
+  background: #03070c;
+}
+
+.name-change-title {
+  margin-bottom: 7px;
+  color: #9bc9e7;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.name-change-panel input {
+  width: 100%;
+  height: 34px;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+.name-change-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.name-cancel-button,
+.name-save-button {
+  height: 29px;
+  padding: 0 11px;
+  border-radius: 7px;
+  font-size: 10px;
+}
+
+.name-cancel-button {
+  border: 1px solid #172b3d;
+  background: #06111c;
+  color: #718292;
+}
+
+.name-save-button {
+  background: #c9e8ff;
+  color: #071018;
+}
+
 /* Message action menu */
 
 .message-actions {
@@ -513,5 +567,9 @@ button:disabled {
   .message-actions,
   .reaction-bar {
     bottom: -39px;
+  }
+
+  .name-change-panel {
+    padding: 12px 15px;
   }
 }
