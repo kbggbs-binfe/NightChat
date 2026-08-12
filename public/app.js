@@ -41,6 +41,13 @@ let savedRoom =
 
 let currentRoom = null;
 
+/*
+ * Special room effect state
+ */
+
+let specialEffectsContainer = null;
+let specialEffectInterval = null;
+
 const reactionOptions = [
   "👍",
   "❤️",
@@ -51,9 +58,234 @@ const reactionOptions = [
 ];
 
 
-/* =========================
+/* =========================================================
+   SPECIAL ROOM EFFECTS
+========================================================= */
+
+function createSpecialEffectsContainer() {
+  if (specialEffectsContainer) {
+    return specialEffectsContainer;
+  }
+
+  specialEffectsContainer =
+    document.createElement("div");
+
+  specialEffectsContainer.id =
+    "special-effects";
+
+  document.body.prepend(
+    specialEffectsContainer
+  );
+
+  return specialEffectsContainer;
+}
+
+
+function clearSpecialRoomEffects() {
+  document.body.classList.remove(
+    "night-room",
+    "love-room"
+  );
+
+  if (specialEffectInterval) {
+    clearInterval(
+      specialEffectInterval
+    );
+
+    specialEffectInterval = null;
+  }
+
+  if (specialEffectsContainer) {
+    specialEffectsContainer.innerHTML = "";
+  }
+}
+
+
+/*
+ * NIGHT ROOM
+ *
+ * Room code:
+ * night
+ */
+
+function createNightStar() {
+  const container =
+    createSpecialEffectsContainer();
+
+  const star =
+    document.createElement("span");
+
+  star.className =
+    "night-star";
+
+  const size =
+    Math.random() * 2.5 + 1;
+
+  star.style.width =
+    `${size}px`;
+
+  star.style.height =
+    `${size}px`;
+
+  star.style.left =
+    `${Math.random() * 100}%`;
+
+  star.style.top =
+    `${Math.random() * 100}%`;
+
+  star.style.animationDuration =
+    `${Math.random() * 8 + 6}s, ${Math.random() * 3 + 2}s`;
+
+  star.style.animationDelay =
+    `${Math.random() * -10}s, ${Math.random() * -4}s`;
+
+  container.appendChild(star);
+
+  /*
+   * Slowly remove older stars so the
+   * page doesn't collect thousands.
+   */
+
+  setTimeout(() => {
+    star.remove();
+  }, 18000);
+}
+
+
+function startNightRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add(
+    "night-room"
+  );
+
+  const container =
+    createSpecialEffectsContainer();
+
+  /*
+   * Initial star field
+   */
+
+  for (let i = 0; i < 90; i++) {
+    createNightStar();
+  }
+
+  /*
+   * Continuously introduce new stars.
+   */
+
+  specialEffectInterval =
+    setInterval(() => {
+
+      for (let i = 0; i < 3; i++) {
+        createNightStar();
+      }
+
+    }, 900);
+}
+
+
+/*
+ * LOVE ROOM
+ *
+ * Room code:
+ * love
+ */
+
+function createLoveHeart() {
+  const container =
+    createSpecialEffectsContainer();
+
+  const heart =
+    document.createElement("span");
+
+  heart.className =
+    "love-heart";
+
+  heart.textContent =
+    Math.random() > 0.5
+      ? "♥"
+      : "♡";
+
+  heart.style.left =
+    `${Math.random() * 100}%`;
+
+  heart.style.bottom =
+    `${-5 - Math.random() * 10}%`;
+
+  heart.style.fontSize =
+    `${12 + Math.random() * 16}px`;
+
+  heart.style.animationDuration =
+    `${8 + Math.random() * 8}s`;
+
+  heart.style.animationDelay =
+    `${Math.random() * 2}s`;
+
+  container.appendChild(heart);
+
+  setTimeout(() => {
+    heart.remove();
+  }, 18000);
+}
+
+
+function startLoveRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add(
+    "love-room"
+  );
+
+  createSpecialEffectsContainer();
+
+  /*
+   * Start with a small number of hearts.
+   */
+
+  for (let i = 0; i < 12; i++) {
+    createLoveHeart();
+  }
+
+  /*
+   * Keep the atmosphere alive.
+   */
+
+  specialEffectInterval =
+    setInterval(() => {
+      createLoveHeart();
+    }, 1000);
+}
+
+
+/*
+ * Decide which special atmosphere
+ * belongs to the current room.
+ */
+
+function applyRoomTheme(roomCode) {
+  clearSpecialRoomEffects();
+
+  const normalizedRoom =
+    String(roomCode || "")
+      .trim()
+      .toLowerCase();
+
+  if (normalizedRoom === "night") {
+    startNightRoom();
+    return;
+  }
+
+  if (normalizedRoom === "love") {
+    startLoveRoom();
+    return;
+  }
+}
+
+
+/* =========================================================
    TIME
-========================= */
+========================================================= */
 
 function formatTime(timestamp) {
   if (!timestamp) return "";
@@ -72,9 +304,9 @@ function formatTime(timestamp) {
 }
 
 
-/* =========================
+/* =========================================================
    REPLY
-========================= */
+========================================================= */
 
 function setReplyTarget(replyData) {
   replyTarget = replyData;
@@ -140,6 +372,7 @@ function setReplyTarget(replyData) {
     document.createElement("button");
 
   cancelButton.type = "button";
+
   cancelButton.className =
     "reply-cancel";
 
@@ -215,9 +448,9 @@ function addReplyPreview(
 }
 
 
-/* =========================
+/* =========================================================
    REACTIONS
-========================= */
+========================================================= */
 
 function sendReaction(
   messageId,
@@ -381,9 +614,9 @@ function updateReactionDisplay(
 }
 
 
-/* =========================
+/* =========================================================
    MESSAGE ACTIONS
-========================= */
+========================================================= */
 
 function createActionMenu(
   wrapper,
@@ -474,9 +707,9 @@ function createActionMenu(
 }
 
 
-/* =========================
+/* =========================================================
    ADD MESSAGE
-========================= */
+========================================================= */
 
 function addMessageToChat(
   sender,
@@ -658,9 +891,9 @@ function addMessageToChat(
 }
 
 
-/* =========================
+/* =========================================================
    SYSTEM MESSAGE
-========================= */
+========================================================= */
 
 function addSystemMessage(
   message
@@ -703,9 +936,9 @@ function addHistoryDivider() {
 }
 
 
-/* =========================
+/* =========================================================
    CONNECTION
-========================= */
+========================================================= */
 
 function setConnected(
   connected
@@ -722,9 +955,9 @@ function setConnected(
 }
 
 
-/* =========================
+/* =========================================================
    ONLINE USERS
-========================= */
+========================================================= */
 
 function updateOnlineUsers(
   users,
@@ -822,9 +1055,9 @@ function updateOnlineUsers(
 }
 
 
-/* =========================
+/* =========================================================
    JOIN ROOM
-========================= */
+========================================================= */
 
 function enterRoom(
   roomCode
@@ -856,11 +1089,6 @@ function enterRoom(
   );
 
 
-  /*
-   * If the user already has a
-   * username, enter immediately.
-   */
-
   if (savedUsername) {
 
     joinChat(
@@ -871,11 +1099,6 @@ function enterRoom(
     return;
   }
 
-
-  /*
-   * Otherwise remember the room
-   * and show the username panel.
-   */
 
   roomJoined = false;
 
@@ -892,9 +1115,9 @@ function enterRoom(
 }
 
 
-/* =========================
+/* =========================================================
    JOIN CHAT
-========================= */
+========================================================= */
 
 function joinChat(
   name,
@@ -981,9 +1204,9 @@ function joinChat(
 }
 
 
-/* =========================
+/* =========================================================
    CHANGE NAME
-========================= */
+========================================================= */
 
 function openNameChangePanel() {
 
@@ -1066,18 +1289,13 @@ function saveNewUsername() {
   closeNameChangePanel();
 
 
-  /*
-   * Reloading reconnects using
-   * the new username and same room.
-   */
-
   window.location.reload();
 }
 
 
-/* =========================
+/* =========================================================
    BUTTON EVENTS
-========================= */
+========================================================= */
 
 roomButton.addEventListener(
   "click",
@@ -1129,9 +1347,9 @@ nameInput.addEventListener(
 );
 
 
-/* =========================
+/* =========================================================
    CHANGE NAME BUTTON
-========================= */
+========================================================= */
 
 if (changeNameButton) {
 
@@ -1201,9 +1419,9 @@ if (newNameInput) {
 }
 
 
-/* =========================
+/* =========================================================
    CHAT FORM
-========================= */
+========================================================= */
 
 chatForm.addEventListener(
   "submit",
@@ -1249,9 +1467,9 @@ chatForm.addEventListener(
 );
 
 
-/* =========================
+/* =========================================================
    WEBSOCKET OPEN
-========================= */
+========================================================= */
 
 socket.addEventListener(
   "open",
@@ -1261,10 +1479,8 @@ socket.addEventListener(
 
 
     /*
-     * Don't automatically join yet.
-     *
-     * We want the user to choose
-     * a room first.
+     * Don't automatically join.
+     * User chooses the room.
      */
 
     if (savedRoom) {
@@ -1283,9 +1499,9 @@ socket.addEventListener(
 );
 
 
-/* =========================
+/* =========================================================
    WEBSOCKET MESSAGES
-========================= */
+========================================================= */
 
 socket.addEventListener(
   "message",
@@ -1328,6 +1544,16 @@ socket.addEventListener(
 
       namePanel.style.display =
         "none";
+
+
+      /*
+       * Activate any special
+       * room atmosphere.
+       */
+
+      applyRoomTheme(
+        data.roomCode
+      );
     }
 
 
@@ -1435,13 +1661,15 @@ socket.addEventListener(
 );
 
 
-/* =========================
+/* =========================================================
    CLOSE
-========================= */
+========================================================= */
 
 socket.addEventListener(
   "close",
   () => {
+
+    clearSpecialRoomEffects();
 
     setConnected(false);
 
@@ -1473,9 +1701,9 @@ socket.addEventListener(
 );
 
 
-/* =========================
+/* =========================================================
    ERROR
-========================= */
+========================================================= */
 
 socket.addEventListener(
   "error",
