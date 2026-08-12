@@ -20,7 +20,7 @@ let replyTarget = null;
 
 const savedUsername = localStorage.getItem("bovarea_username");
 
-const reactionOptions = ["👍", "❤️", "😂", "😮", "😢", "💀"];
+const reactionOptions = ["👍", "❤️", "😂", "😭", "🙏", "🥀"];
 
 function formatTime(timestamp) {
   if (!timestamp) return "";
