@@ -54,7 +54,7 @@ const clients = new Map();
 const recentMessages = [];
 const HISTORY_DURATION = 60 * 1000;
 
-const allowedReactions = ["👍", "❤️", "😂", "😮", "😢", "💀"];
+const allowedReactions = ["👍", "❤️", "😂", "😭", "🙏", "🥀"];
 
 function broadcast(payload, except = null) {
   const message = JSON.stringify(payload);
