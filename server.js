@@ -17,13 +17,28 @@ const mimeTypes = {
   ".ico": "image/x-icon"
 };
 
+
+/* =========================
+   HTTP SERVER
+========================= */
+
 const server = http.createServer((req, res) => {
-  let requestedPath = decodeURIComponent(req.url.split("?")[0]);
+  let requestedPath = decodeURIComponent(
+    req.url.split("?")[0]
+  );
 
-  if (requestedPath === "/") requestedPath = "/index.html";
+  if (requestedPath === "/") {
+    requestedPath = "/index.html";
+  }
 
-  const safePath = path.normalize(requestedPath).replace(/^(\.\.[/\\])+/, "");
-  const filePath = path.join(publicDir, safePath);
+  const safePath = path
+    .normalize(requestedPath)
+    .replace(/^(\.\.[/\\])+/, "");
+
+  const filePath = path.join(
+    publicDir,
+    safePath
+  );
 
   if (!filePath.startsWith(publicDir)) {
     res.writeHead(403);
@@ -33,262 +48,978 @@ const server = http.createServer((req, res) => {
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404, {
-        "Content-Type": "text/plain; charset=utf-8"
+        "Content-Type":
+          "text/plain; charset=utf-8"
       });
+
       return res.end("Not found");
     }
 
-    const ext = path.extname(filePath).toLowerCase();
+    const ext = path
+      .extname(filePath)
+      .toLowerCase();
 
     res.writeHead(200, {
-      "Content-Type": mimeTypes[ext] || "application/octet-stream"
+      "Content-Type":
+        mimeTypes[ext] ||
+        "application/octet-stream"
     });
 
     res.end(data);
   });
 });
 
-const wss = new WebSocket.Server({ server });
+
+/* =========================
+   WEBSOCKET SERVER
+========================= */
+
+const wss =
+  new WebSocket.Server({
+    server
+  });
+
+
+/*
+ * Each connected socket stores:
+ *
+ * {
+ *   username: "Jaffar",
+ *   roomCode: "moon"
+ * }
+ */
+
 const clients = new Map();
 
-const recentMessages = [];
-const HISTORY_DURATION = 60 * 1000;
 
-const allowedReactions = ["👍", "❤️", "😂", "😭", "🙏", "🥀"];
+/*
+ * Rooms are created automatically.
+ *
+ * rooms = {
+ *   "moon": {
+ *      clients: Set,
+ *      messages: []
+ *   }
+ * }
+ */
 
-function broadcast(payload, except = null) {
-  const message = JSON.stringify(payload);
+const rooms = new Map();
 
-  for (const [socket] of clients) {
-    if (socket.readyState === WebSocket.OPEN && socket !== except) {
+
+const HISTORY_DURATION =
+  60 * 1000;
+
+
+/*
+ * These are the only reactions
+ * Bovarea currently allows.
+ */
+
+const allowedReactions = [
+  "👍",
+  "❤️",
+  "😂",
+  "😭",
+  "🙏",
+  "🥀"
+];
+
+
+/* =========================
+   ROOM CODE
+========================= */
+
+function normalizeRoomCode(code) {
+
+  let roomCode =
+    String(code || "")
+      .trim()
+      .slice(0, 100)
+      .toLowerCase();
+
+  /*
+   * Old clients that don't send a room
+   * temporarily go into "default".
+   */
+
+  if (!roomCode) {
+    roomCode = "default";
+  }
+
+  return roomCode;
+}
+
+
+function getOrCreateRoom(roomCode) {
+
+  if (!rooms.has(roomCode)) {
+
+    rooms.set(roomCode, {
+      clients: new Set(),
+      messages: []
+    });
+  }
+
+  return rooms.get(roomCode);
+}
+
+
+function removeEmptyRoom(roomCode) {
+
+  const room = rooms.get(roomCode);
+
+  if (!room) return;
+
+  if (room.clients.size === 0) {
+    rooms.delete(roomCode);
+  }
+}
+
+
+/* =========================
+   ROOM BROADCAST
+========================= */
+
+function broadcastToRoom(
+  roomCode,
+  payload,
+  except = null
+) {
+
+  const room =
+    rooms.get(roomCode);
+
+  if (!room) return;
+
+  const message =
+    JSON.stringify(payload);
+
+
+  for (const socket of room.clients) {
+
+    if (
+      socket.readyState ===
+        WebSocket.OPEN &&
+      socket !== except
+    ) {
+
       socket.send(message);
     }
   }
 }
 
-function getOnlineUsers() {
-  return Array.from(clients.values())
-    .filter((username) => username !== "Anonymous");
+
+/* =========================
+   ONLINE USERS
+========================= */
+
+function getOnlineUsers(
+  roomCode
+) {
+
+  const room =
+    rooms.get(roomCode);
+
+  if (!room) return [];
+
+
+  const users = [];
+
+
+  for (const socket of room.clients) {
+
+    const client =
+      clients.get(socket);
+
+    if (
+      client &&
+      client.username !== "Anonymous"
+    ) {
+
+      users.push(
+        client.username
+      );
+    }
+  }
+
+
+  return users;
 }
 
-function broadcastUserList() {
-  const users = getOnlineUsers();
 
-  broadcast({
-    type: "users",
-    count: users.length,
-    users
-  });
+function broadcastUserList(
+  roomCode
+) {
+
+  const users =
+    getOnlineUsers(roomCode);
+
+
+  broadcastToRoom(
+    roomCode,
+    {
+      type: "users",
+      count: users.length,
+      users
+    }
+  );
 }
 
-function cleanOldMessages() {
-  const cutoff = Date.now() - HISTORY_DURATION;
+
+/* =========================
+   MESSAGE HISTORY
+========================= */
+
+function cleanOldMessages(
+  roomCode
+) {
+
+  const room =
+    rooms.get(roomCode);
+
+  if (!room) return;
+
+
+  const cutoff =
+    Date.now() -
+    HISTORY_DURATION;
+
 
   while (
-    recentMessages.length > 0 &&
-    new Date(recentMessages[0].time).getTime() < cutoff
+    room.messages.length > 0 &&
+    new Date(
+      room.messages[0].time
+    ).getTime() < cutoff
   ) {
-    recentMessages.shift();
+
+    room.messages.shift();
   }
 }
 
+
 function addRecentMessage(
+  roomCode,
   sender,
   message,
   time,
   replyTo = null
 ) {
-  cleanOldMessages();
+
+  const room =
+    getOrCreateRoom(
+      roomCode
+    );
+
+
+  cleanOldMessages(
+    roomCode
+  );
+
 
   const chatMessage = {
-    id: `${time}-${Math.random().toString(36).slice(2, 10)}`,
+
+    id:
+      `${time}-${Math.random()
+        .toString(36)
+        .slice(2, 10)}`,
+
     sender,
+
     message,
-    time: new Date(time).toISOString(),
+
+    time:
+      new Date(time)
+        .toISOString(),
+
     reactions: {},
+
     replyTo
   };
 
-  recentMessages.push(chatMessage);
+
+  room.messages.push(
+    chatMessage
+  );
+
 
   return chatMessage;
 }
 
-function sendRecentMessages(socket) {
-  cleanOldMessages();
 
-  if (recentMessages.length === 0) return;
+function sendRecentMessages(
+  socket,
+  roomCode
+) {
 
-  socket.send(JSON.stringify({
-    type: "history",
-    messages: recentMessages
-  }));
+  const room =
+    rooms.get(roomCode);
+
+  if (!room) return;
+
+
+  cleanOldMessages(
+    roomCode
+  );
+
+
+  if (
+    room.messages.length === 0
+  ) {
+    return;
+  }
+
+
+  socket.send(
+    JSON.stringify({
+      type: "history",
+      messages:
+        room.messages
+    })
+  );
 }
 
-wss.on("connection", (socket) => {
-  clients.set(socket, "Anonymous");
 
-  socket.send(JSON.stringify({
-    type: "system",
-    message: "Connected to the server."
-  }));
+/* =========================
+   CONNECTION
+========================= */
 
-  socket.on("message", (raw) => {
-    let data;
+wss.on(
+  "connection",
+  (socket) => {
 
-    try {
-      data = JSON.parse(raw.toString());
-    } catch {
-      return;
-    }
+    /*
+     * Every new connection starts
+     * without a username or room.
+     */
 
-    if (data.type === "join") {
-      const name = String(data.name || "Anonymous")
-        .trim()
-        .slice(0, 24);
+    clients.set(
+      socket,
+      {
+        username: "Anonymous",
+        roomCode: null
+      }
+    );
 
-      const username = name || "Anonymous";
 
-      clients.set(socket, username);
-
-      socket.send(JSON.stringify({
+    socket.send(
+      JSON.stringify({
         type: "system",
-        message: `Welcome, ${username}.`
-      }));
+        message:
+          "Connected to the server."
+      })
+    );
 
-      sendRecentMessages(socket);
 
-      broadcast({
-        type: "system",
-        message: `${username} joined the chat.`
-      }, socket);
+    /* =========================
+       INCOMING MESSAGE
+    ========================= */
 
-      broadcastUserList();
+    socket.on(
+      "message",
+      (raw) => {
 
-      return;
-    }
+        let data;
 
-    if (data.type === "chat") {
-      const message = String(data.message || "")
-        .trim()
-        .slice(0, 500);
 
-      if (!message) return;
+        try {
 
-      const sender = clients.get(socket) || "Anonymous";
-      const time = Date.now();
+          data =
+            JSON.parse(
+              raw.toString()
+            );
 
-      let replyTo = null;
+        } catch {
 
-      if (data.replyTo) {
-        const repliedMessage = recentMessages.find(
-          (item) => item.id === data.replyTo
+          return;
+        }
+
+
+        /* =========================
+           JOIN ROOM
+        ========================= */
+
+        if (
+          data.type === "join"
+        ) {
+
+          const name =
+            String(
+              data.name ||
+                "Anonymous"
+            )
+              .trim()
+              .slice(0, 24);
+
+
+          const username =
+            name ||
+            "Anonymous";
+
+
+          const roomCode =
+            normalizeRoomCode(
+              data.roomCode
+            );
+
+
+          const previousClient =
+            clients.get(socket);
+
+
+          /*
+           * If the socket was already
+           * inside another room, remove
+           * it from that room first.
+           */
+
+          if (
+            previousClient &&
+            previousClient.roomCode
+          ) {
+
+            const oldRoom =
+              rooms.get(
+                previousClient.roomCode
+              );
+
+
+            if (oldRoom) {
+
+              oldRoom.clients.delete(
+                socket
+              );
+
+
+              broadcastToRoom(
+                previousClient.roomCode,
+                {
+                  type: "system",
+                  message:
+                    `${previousClient.username} left the chat.`
+                }
+              );
+
+
+              broadcastUserList(
+                previousClient.roomCode
+              );
+
+
+              removeEmptyRoom(
+                previousClient.roomCode
+              );
+            }
+          }
+
+
+          /*
+           * Get or create the requested room.
+           */
+
+          const room =
+            getOrCreateRoom(
+              roomCode
+            );
+
+
+          room.clients.add(
+            socket
+          );
+
+
+          clients.set(
+            socket,
+            {
+              username,
+              roomCode
+            }
+          );
+
+
+          /*
+           * Tell the user which room
+           * they entered.
+           */
+
+          socket.send(
+            JSON.stringify({
+              type: "room",
+              roomCode
+            })
+          );
+
+
+          socket.send(
+            JSON.stringify({
+              type: "system",
+              message:
+                `Welcome, ${username}.`
+            })
+          );
+
+
+          /*
+           * Send the room's recent
+           * one-minute history.
+           */
+
+          sendRecentMessages(
+            socket,
+            roomCode
+          );
+
+
+          /*
+           * Tell everyone else in
+           * this room that the user
+           * joined.
+           */
+
+          broadcastToRoom(
+            roomCode,
+            {
+              type: "system",
+              message:
+                `${username} joined the chat.`
+            },
+            socket
+          );
+
+
+          broadcastUserList(
+            roomCode
+          );
+
+
+          return;
+        }
+
+
+        /* =========================
+           CHAT MESSAGE
+        ========================= */
+
+        if (
+          data.type === "chat"
+        ) {
+
+          const client =
+            clients.get(socket);
+
+
+          if (
+            !client ||
+            !client.roomCode
+          ) {
+            return;
+          }
+
+
+          const message =
+            String(
+              data.message || ""
+            )
+              .trim()
+              .slice(0, 500);
+
+
+          if (!message) {
+            return;
+          }
+
+
+          const {
+            username,
+            roomCode
+          } = client;
+
+
+          const time =
+            Date.now();
+
+
+          let replyTo = null;
+
+
+          /*
+           * Replies can only reference
+           * messages from the same room.
+           */
+
+          if (data.replyTo) {
+
+            const room =
+              rooms.get(
+                roomCode
+              );
+
+
+            if (room) {
+
+              const repliedMessage =
+                room.messages.find(
+                  (item) =>
+                    item.id ===
+                    data.replyTo
+                );
+
+
+              if (repliedMessage) {
+
+                replyTo = {
+
+                  id:
+                    repliedMessage.id,
+
+                  sender:
+                    repliedMessage.sender,
+
+                  message:
+                    repliedMessage.message
+                };
+              }
+            }
+          }
+
+
+          const chatMessage =
+            addRecentMessage(
+              roomCode,
+              username,
+              message,
+              time,
+              replyTo
+            );
+
+
+          /*
+           * Send to everyone ELSE
+           * in the same room.
+           */
+
+          broadcastToRoom(
+            roomCode,
+            {
+              type: "chat",
+
+              id:
+                chatMessage.id,
+
+              sender:
+                chatMessage.sender,
+
+              message:
+                chatMessage.message,
+
+              time:
+                chatMessage.time,
+
+              reactions:
+                chatMessage.reactions,
+
+              replyTo:
+                chatMessage.replyTo
+            },
+            socket
+          );
+
+
+          /*
+           * Send the message back to
+           * the sender with self=true.
+           */
+
+          socket.send(
+            JSON.stringify({
+
+              type: "chat",
+
+              id:
+                chatMessage.id,
+
+              sender:
+                chatMessage.sender,
+
+              message:
+                chatMessage.message,
+
+              time:
+                chatMessage.time,
+
+              reactions:
+                chatMessage.reactions,
+
+              replyTo:
+                chatMessage.replyTo,
+
+              self: true
+            })
+          );
+
+
+          return;
+        }
+
+
+        /* =========================
+           REACTION
+        ========================= */
+
+        if (
+          data.type === "reaction"
+        ) {
+
+          const client =
+            clients.get(socket);
+
+
+          if (
+            !client ||
+            !client.roomCode
+          ) {
+            return;
+          }
+
+
+          const {
+            username,
+            roomCode
+          } = client;
+
+
+          cleanOldMessages(
+            roomCode
+          );
+
+
+          const room =
+            rooms.get(
+              roomCode
+            );
+
+
+          if (!room) {
+            return;
+          }
+
+
+          const message =
+            room.messages.find(
+              (item) =>
+                item.id ===
+                data.messageId
+            );
+
+
+          if (!message) {
+            return;
+          }
+
+
+          const reaction =
+            String(
+              data.reaction || ""
+            );
+
+
+          if (
+            !allowedReactions.includes(
+              reaction
+            )
+          ) {
+            return;
+          }
+
+
+          if (
+            !message.reactions[
+              reaction
+            ]
+          ) {
+
+            message.reactions[
+              reaction
+            ] = [];
+          }
+
+
+          const users =
+            message.reactions[
+              reaction
+            ];
+
+
+          const existingIndex =
+            users.indexOf(
+              username
+            );
+
+
+          /*
+           * Clicking an existing
+           * reaction removes it.
+           *
+           * Clicking it again adds it.
+           */
+
+          if (
+            existingIndex !== -1
+          ) {
+
+            users.splice(
+              existingIndex,
+              1
+            );
+
+
+            if (
+              users.length === 0
+            ) {
+
+              delete message
+                .reactions[
+                  reaction
+                ];
+            }
+
+          } else {
+
+            users.push(
+              username
+            );
+          }
+
+
+          /*
+           * Reaction updates only
+           * go to this room.
+           */
+
+          broadcastToRoom(
+            roomCode,
+            {
+              type: "reaction",
+
+              messageId:
+                message.id,
+
+              reactions:
+                message.reactions
+            }
+          );
+
+
+          return;
+        }
+      }
+    );
+
+
+    /* =========================
+       CONNECTION CLOSED
+    ========================= */
+
+    socket.on(
+      "close",
+      () => {
+
+        const client =
+          clients.get(socket);
+
+
+        clients.delete(
+          socket
         );
 
-        if (repliedMessage) {
-          replyTo = {
-            id: repliedMessage.id,
-            sender: repliedMessage.sender,
-            message: repliedMessage.message
-          };
+
+        if (
+          !client ||
+          !client.roomCode
+        ) {
+          return;
         }
-      }
 
-      const chatMessage = addRecentMessage(
-        sender,
-        message,
-        time,
-        replyTo
-      );
 
-      broadcast({
-        type: "chat",
-        id: chatMessage.id,
-        sender: chatMessage.sender,
-        message: chatMessage.message,
-        time: chatMessage.time,
-        reactions: chatMessage.reactions,
-        replyTo: chatMessage.replyTo
-      }, socket);
+        const {
+          username,
+          roomCode
+        } = client;
 
-      socket.send(JSON.stringify({
-        type: "chat",
-        id: chatMessage.id,
-        sender: chatMessage.sender,
-        message: chatMessage.message,
-        time: chatMessage.time,
-        reactions: chatMessage.reactions,
-        replyTo: chatMessage.replyTo,
-        self: true
-      }));
 
-      return;
-    }
+        const room =
+          rooms.get(
+            roomCode
+          );
 
-    if (data.type === "reaction") {
-      cleanOldMessages();
 
-      const message = recentMessages.find(
-        (item) => item.id === data.messageId
-      );
-
-      if (!message) return;
-
-      const reaction = String(data.reaction || "");
-
-      if (!allowedReactions.includes(reaction)) return;
-
-      const username = clients.get(socket);
-
-      if (!username || username === "Anonymous") return;
-
-      if (!message.reactions[reaction]) {
-        message.reactions[reaction] = [];
-      }
-
-      const users = message.reactions[reaction];
-      const existingIndex = users.indexOf(username);
-
-      if (existingIndex !== -1) {
-        users.splice(existingIndex, 1);
-
-        if (users.length === 0) {
-          delete message.reactions[reaction];
+        if (!room) {
+          return;
         }
-      } else {
-        users.push(username);
+
+
+        room.clients.delete(
+          socket
+        );
+
+
+        if (
+          username !==
+          "Anonymous"
+        ) {
+
+          broadcastToRoom(
+            roomCode,
+            {
+              type: "system",
+              message:
+                `${username} left the chat.`
+            }
+          );
+
+
+          broadcastUserList(
+            roomCode
+          );
+        }
+
+
+        /*
+         * Delete the room when
+         * nobody is inside it.
+         */
+
+        removeEmptyRoom(
+          roomCode
+        );
       }
+    );
 
-      broadcast({
-        type: "reaction",
-        messageId: message.id,
-        reactions: message.reactions
-      });
 
-      return;
-    }
-  });
+    socket.on(
+      "error",
+      (error) => {
 
-  socket.on("close", () => {
-    const username = clients.get(socket);
+        console.error(
+          "WebSocket error:",
+          error.message
+        );
+      }
+    );
+  }
+);
 
-    clients.delete(socket);
 
-    if (username && username !== "Anonymous") {
-      broadcast({
-        type: "system",
-        message: `${username} left the chat.`
-      });
+/* =========================
+   START SERVER
+========================= */
 
-      broadcastUserList();
-    }
-  });
+server.listen(
+  PORT,
+  "0.0.0.0",
+  () => {
 
-  socket.on("error", (error) => {
-    console.error("WebSocket error:", error.message);
-  });
-});
-
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Chat server running at http://localhost:${PORT}`);
-});
+    console.log(
+      `Chat server running at http://localhost:${PORT}`
+    );
+  }
+);
