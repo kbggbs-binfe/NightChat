@@ -24,9 +24,14 @@ const socket = new WebSocket(serverUrl);
 let joined = false;
 let replyTarget = null;
 
-const savedUsername = localStorage.getItem("bovarea_username");
+let savedUsername = localStorage.getItem("bovarea_username");
 
 const reactionOptions = ["👍", "❤️", "😂", "😭", "🙏", "🥀"];
+
+
+/* =========================
+   TIME
+========================= */
 
 function formatTime(timestamp) {
   if (!timestamp) return "";
@@ -41,6 +46,11 @@ function formatTime(timestamp) {
   });
 }
 
+
+/* =========================
+   REPLY
+========================= */
+
 function setReplyTarget(replyData) {
   replyTarget = replyData;
 
@@ -52,7 +62,10 @@ function setReplyTarget(replyData) {
     replyPreview.className = "reply-preview";
 
     const composer = document.querySelector(".composer");
-    composer.insertBefore(replyPreview, composer.firstChild);
+
+    if (composer) {
+      composer.insertBefore(replyPreview, composer.firstChild);
+    }
   }
 
   replyPreview.innerHTML = "";
@@ -84,6 +97,7 @@ function setReplyTarget(replyData) {
   messageInput.focus();
 }
 
+
 function cancelReply() {
   replyTarget = null;
 
@@ -93,6 +107,7 @@ function cancelReply() {
     replyPreview.remove();
   }
 }
+
 
 function addReplyPreview(wrapper, replyTo) {
   if (!replyTo) return;
@@ -114,6 +129,24 @@ function addReplyPreview(wrapper, replyTo) {
   wrapper.appendChild(replyElement);
 }
 
+
+/* =========================
+   REACTIONS
+========================= */
+
+function sendReaction(messageId, reaction) {
+  if (!joined || socket.readyState !== WebSocket.OPEN) {
+    return;
+  }
+
+  socket.send(JSON.stringify({
+    type: "reaction",
+    messageId,
+    reaction
+  }));
+}
+
+
 function createReactionBar(messageId) {
   const bar = document.createElement("div");
   bar.className = "reaction-bar";
@@ -128,13 +161,13 @@ function createReactionBar(messageId) {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
 
-      if (!joined || socket.readyState !== WebSocket.OPEN) return;
+      sendReaction(messageId, reaction);
 
-      socket.send(JSON.stringify({
-        type: "reaction",
-        messageId,
-        reaction
-      }));
+      const wrapper = button.closest(".message");
+
+      if (wrapper) {
+        wrapper.classList.remove("reactions-open");
+      }
     });
 
     bar.appendChild(button);
@@ -143,11 +176,62 @@ function createReactionBar(messageId) {
   return bar;
 }
 
-function createActionMenu(wrapper, messageId, sender, message) {
+
+function updateReactionDisplay(wrapper, reactions) {
+  let reactionsElement = wrapper.querySelector(".reactions");
+
+  if (!reactionsElement) {
+    reactionsElement = document.createElement("div");
+    reactionsElement.className = "reactions";
+    wrapper.appendChild(reactionsElement);
+  }
+
+  reactionsElement.innerHTML = "";
+
+  Object.entries(reactions || {}).forEach(([reaction, users]) => {
+    if (!Array.isArray(users) || users.length === 0) {
+      return;
+    }
+
+    const reactionElement = document.createElement("button");
+
+    reactionElement.className = "reaction";
+    reactionElement.type = "button";
+    reactionElement.textContent = `${reaction} ${users.length}`;
+
+    reactionElement.addEventListener("click", (event) => {
+      event.stopPropagation();
+
+      sendReaction(
+        wrapper.dataset.messageId,
+        reaction
+      );
+    });
+
+    reactionsElement.appendChild(reactionElement);
+  });
+
+  if (Object.keys(reactions || {}).length === 0) {
+    reactionsElement.remove();
+  }
+}
+
+
+/* =========================
+   MESSAGE ACTIONS
+========================= */
+
+function createActionMenu(
+  wrapper,
+  messageId,
+  sender,
+  message
+) {
   const actionMenu = document.createElement("div");
   actionMenu.className = "message-actions";
 
   const replyButton = document.createElement("button");
+
   replyButton.type = "button";
   replyButton.className = "message-action";
   replyButton.textContent = "↩ Reply";
@@ -164,7 +248,9 @@ function createActionMenu(wrapper, messageId, sender, message) {
     wrapper.classList.remove("actions-open");
   });
 
+
   const reactButton = document.createElement("button");
+
   reactButton.type = "button";
   reactButton.className = "message-action";
   reactButton.textContent = "React";
@@ -173,4 +259,752 @@ function createActionMenu(wrapper, messageId, sender, message) {
     event.stopPropagation();
 
     wrapper.classList.remove("actions-open");
-    wrapper.classList.add("reactions-open
+    wrapper.classList.add("reactions-open");
+  });
+
+
+  actionMenu.appendChild(replyButton);
+  actionMenu.appendChild(reactButton);
+
+  return actionMenu;
+}
+
+
+/* =========================
+   ADD MESSAGE
+========================= */
+
+function addMessageToChat(
+  sender,
+  message,
+  time,
+  self = false,
+  messageId = "",
+  reactions = {},
+  replyTo = null
+) {
+  const wrapper = document.createElement("div");
+
+  wrapper.className = self
+    ? "message self"
+    : "message";
+
+  if (messageId) {
+    wrapper.dataset.messageId = messageId;
+  }
+
+
+  const senderElement = document.createElement("div");
+
+  senderElement.className = "sender";
+  senderElement.textContent = sender;
+
+
+  const textElement = document.createElement("div");
+
+  textElement.className = "text";
+  textElement.textContent = message;
+
+
+  wrapper.appendChild(senderElement);
+
+  addReplyPreview(
+    wrapper,
+    replyTo
+  );
+
+  wrapper.appendChild(textElement);
+
+
+  if (time) {
+    const timeElement = document.createElement("div");
+
+    timeElement.className = "message-time";
+    timeElement.textContent = formatTime(time);
+
+    wrapper.appendChild(timeElement);
+  }
+
+
+  if (messageId) {
+    const actionMenu = createActionMenu(
+      wrapper,
+      messageId,
+      sender,
+      message
+    );
+
+    const reactionBar = createReactionBar(
+      messageId
+    );
+
+    wrapper.appendChild(actionMenu);
+    wrapper.appendChild(reactionBar);
+
+
+    wrapper.addEventListener("click", (event) => {
+
+      if (
+        event.target.closest(".message-actions") ||
+        event.target.closest(".reaction-bar") ||
+        event.target.closest(".reactions")
+      ) {
+        return;
+      }
+
+
+      const allMessages =
+        document.querySelectorAll(".message");
+
+
+      allMessages.forEach((otherMessage) => {
+        if (otherMessage !== wrapper) {
+          otherMessage.classList.remove(
+            "actions-open"
+          );
+
+          otherMessage.classList.remove(
+            "reactions-open"
+          );
+        }
+      });
+
+
+      wrapper.classList.toggle(
+        "actions-open"
+      );
+    });
+  }
+
+
+  if (reactions) {
+    updateReactionDisplay(
+      wrapper,
+      reactions
+    );
+  }
+
+
+  chatWindow.appendChild(wrapper);
+
+  chatWindow.scrollTop =
+    chatWindow.scrollHeight;
+}
+
+
+/* =========================
+   SYSTEM MESSAGE
+========================= */
+
+function addSystemMessage(message) {
+  const element =
+    document.createElement("div");
+
+  element.className = "system";
+  element.textContent = message;
+
+  chatWindow.appendChild(element);
+
+  chatWindow.scrollTop =
+    chatWindow.scrollHeight;
+}
+
+
+function addHistoryDivider() {
+  const element =
+    document.createElement("div");
+
+  element.className =
+    "history-divider";
+
+  element.textContent =
+    "While you were away";
+
+  chatWindow.appendChild(element);
+}
+
+
+/* =========================
+   CONNECTION
+========================= */
+
+function setConnected(connected) {
+
+  onlineDot.classList.toggle(
+    "connected",
+    connected
+  );
+
+  status.textContent =
+    connected
+      ? "Connected"
+      : "Disconnected";
+}
+
+
+/* =========================
+   ONLINE USERS
+========================= */
+
+function updateOnlineUsers(
+  users,
+  count
+) {
+  let onlinePanel =
+    document.getElementById(
+      "onlinePanel"
+    );
+
+
+  if (!onlinePanel) {
+    onlinePanel =
+      document.createElement("div");
+
+    onlinePanel.id =
+      "onlinePanel";
+
+    onlinePanel.className =
+      "online-panel";
+
+
+    const header =
+      document.querySelector(".header");
+
+    if (header) {
+      header.appendChild(
+        onlinePanel
+      );
+    }
+  }
+
+
+  onlinePanel.innerHTML = "";
+
+
+  const countElement =
+    document.createElement("div");
+
+  countElement.className =
+    "online-count";
+
+  countElement.textContent =
+    `${count} online`;
+
+  onlinePanel.appendChild(
+    countElement
+  );
+
+
+  if (count > 0) {
+
+    const usersElement =
+      document.createElement("div");
+
+    usersElement.className =
+      "online-users";
+
+
+    users.forEach((username) => {
+
+      const userElement =
+        document.createElement("div");
+
+      userElement.className =
+        "online-user";
+
+      userElement.textContent =
+        `● ${username}`;
+
+      usersElement.appendChild(
+        userElement
+      );
+    });
+
+
+    onlinePanel.appendChild(
+      usersElement
+    );
+  }
+}
+
+
+/* =========================
+   JOIN
+========================= */
+
+function joinChat(name) {
+
+  const username =
+    String(name || "")
+      .trim()
+      .slice(0, 24);
+
+
+  if (
+    !username ||
+    socket.readyState !==
+      WebSocket.OPEN
+  ) {
+    return;
+  }
+
+
+  localStorage.setItem(
+    "bovarea_username",
+    username
+  );
+
+  savedUsername = username;
+
+
+  socket.send(
+    JSON.stringify({
+      type: "join",
+      name: username
+    })
+  );
+
+
+  joined = true;
+
+
+  if (namePanel) {
+    namePanel.style.display =
+      "none";
+  }
+
+
+  if (nameChangePanel) {
+    nameChangePanel.style.display =
+      "none";
+  }
+
+
+  messageInput.disabled =
+    false;
+
+  sendButton.disabled =
+    false;
+
+  messageInput.focus();
+}
+
+
+/* =========================
+   CHANGE NAME
+========================= */
+
+function openNameChangePanel() {
+
+  if (!joined) {
+    return;
+  }
+
+
+  const currentUsername =
+    localStorage.getItem(
+      "bovarea_username"
+    ) || "";
+
+
+  newNameInput.value =
+    currentUsername;
+
+
+  nameChangePanel.style.display =
+    "block";
+
+
+  newNameInput.focus();
+  newNameInput.select();
+}
+
+
+function closeNameChangePanel() {
+
+  nameChangePanel.style.display =
+    "none";
+
+  newNameInput.value = "";
+}
+
+
+function saveNewUsername() {
+
+  const username =
+    newNameInput.value
+      .trim()
+      .slice(0, 24);
+
+
+  if (!username) {
+    newNameInput.focus();
+    return;
+  }
+
+
+  const currentUsername =
+    localStorage.getItem(
+      "bovarea_username"
+    ) || "";
+
+
+  if (
+    username ===
+    currentUsername
+  ) {
+    closeNameChangePanel();
+    return;
+  }
+
+
+  localStorage.setItem(
+    "bovarea_username",
+    username
+  );
+
+
+  savedUsername =
+    username;
+
+
+  closeNameChangePanel();
+
+
+  /*
+   * Reconnect with the new username.
+   * Reloading is simple and reliable for the
+   * current version of Bovarea.
+   */
+  window.location.reload();
+}
+
+
+/* =========================
+   BUTTON EVENTS
+========================= */
+
+joinButton.addEventListener(
+  "click",
+  () => {
+    joinChat(
+      nameInput.value
+    );
+  }
+);
+
+
+nameInput.addEventListener(
+  "keydown",
+  (event) => {
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+
+      joinButton.click();
+    }
+  }
+);
+
+
+if (changeNameButton) {
+
+  changeNameButton.addEventListener(
+    "click",
+    (event) => {
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      openNameChangePanel();
+    }
+  );
+}
+
+
+if (cancelNameButton) {
+
+  cancelNameButton.addEventListener(
+    "click",
+    (event) => {
+
+      event.preventDefault();
+
+      closeNameChangePanel();
+    }
+  );
+}
+
+
+if (saveNameButton) {
+
+  saveNameButton.addEventListener(
+    "click",
+    (event) => {
+
+      event.preventDefault();
+
+      saveNewUsername();
+    }
+  );
+}
+
+
+if (newNameInput) {
+
+  newNameInput.addEventListener(
+    "keydown",
+    (event) => {
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+
+        saveNewUsername();
+      }
+
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+
+        closeNameChangePanel();
+      }
+    }
+  );
+}
+
+
+/* =========================
+   CHAT FORM
+========================= */
+
+chatForm.addEventListener(
+  "submit",
+  (event) => {
+
+    event.preventDefault();
+
+
+    const message =
+      messageInput.value.trim();
+
+
+    if (
+      !message ||
+      !joined ||
+      socket.readyState !==
+        WebSocket.OPEN
+    ) {
+      return;
+    }
+
+
+    socket.send(
+      JSON.stringify({
+        type: "chat",
+        message,
+        replyTo:
+          replyTarget
+            ? replyTarget.id
+            : null
+      })
+    );
+
+
+    messageInput.value = "";
+
+    cancelReply();
+
+    messageInput.focus();
+  }
+);
+
+
+/* =========================
+   WEBSOCKET OPEN
+========================= */
+
+socket.addEventListener(
+  "open",
+  () => {
+
+    setConnected(true);
+
+
+    if (savedUsername) {
+
+      nameInput.value =
+        savedUsername;
+
+      joinChat(
+        savedUsername
+      );
+    }
+  }
+);
+
+
+/* =========================
+   WEBSOCKET MESSAGES
+========================= */
+
+socket.addEventListener(
+  "message",
+  (event) => {
+
+    let data;
+
+
+    try {
+      data =
+        JSON.parse(
+          event.data
+        );
+    } catch {
+
+      addSystemMessage(
+        event.data
+      );
+
+      return;
+    }
+
+
+    if (data.type === "system") {
+
+      addSystemMessage(
+        data.message
+      );
+    }
+
+
+    if (data.type === "users") {
+
+      updateOnlineUsers(
+        data.users,
+        data.count
+      );
+    }
+
+
+    if (data.type === "history") {
+
+      if (
+        Array.isArray(
+          data.messages
+        ) &&
+        data.messages.length > 0
+      ) {
+
+        addHistoryDivider();
+
+
+        data.messages.forEach(
+          (message) => {
+
+            addMessageToChat(
+              message.sender,
+              message.message,
+              message.time,
+              message.sender ===
+                savedUsername,
+              message.id,
+              message.reactions,
+              message.replyTo
+            );
+          }
+        );
+      }
+    }
+
+
+    if (data.type === "chat") {
+
+      addMessageToChat(
+        data.sender,
+        data.message,
+        data.time,
+        Boolean(data.self),
+        data.id,
+        data.reactions,
+        data.replyTo
+      );
+    }
+
+
+    if (data.type === "reaction") {
+
+      const messageElement =
+        document.querySelector(
+          `[data-message-id="${CSS.escape(
+            data.messageId
+          )}"]`
+        );
+
+
+      if (messageElement) {
+
+        updateReactionDisplay(
+          messageElement,
+          data.reactions
+        );
+      }
+    }
+  }
+);
+
+
+/* =========================
+   WEBSOCKET CLOSE
+========================= */
+
+socket.addEventListener(
+  "close",
+  () => {
+
+    setConnected(false);
+
+    messageInput.disabled =
+      true;
+
+    sendButton.disabled =
+      true;
+
+
+    const onlinePanel =
+      document.getElementById(
+        "onlinePanel"
+      );
+
+
+    if (onlinePanel) {
+      onlinePanel.remove();
+    }
+
+
+    addSystemMessage(
+      "Connection closed."
+    );
+  }
+);
+
+
+/* =========================
+   WEBSOCKET ERROR
+========================= */
+
+socket.addEventListener(
+  "error",
+  (error) => {
+
+    console.error(
+      "WebSocket error:",
+      error
+    );
+
+    setConnected(false);
+
+    addSystemMessage(
+      "A connection error occurred."
+    );
+  }
+);
