@@ -62,51 +62,71 @@ const reactionOptions = [
    SPECIAL ROOM EFFECTS
 ========================================================= */
 
+let specialEffectsContainer = null;
+let specialEffectInterval = null;
+let colorThemeStyle = null;
+
+
+/* =========================================================
+   EFFECT CONTAINER
+========================================================= */
+
 function createSpecialEffectsContainer() {
   if (specialEffectsContainer) {
     return specialEffectsContainer;
   }
 
-  specialEffectsContainer =
-    document.createElement("div");
+  specialEffectsContainer = document.createElement("div");
+  specialEffectsContainer.id = "special-effects";
 
-  specialEffectsContainer.id =
-    "special-effects";
-
-  document.body.prepend(
-    specialEffectsContainer
-  );
+  document.body.prepend(specialEffectsContainer);
 
   return specialEffectsContainer;
 }
 
 
+/* =========================================================
+   CLEAR ROOM EFFECTS
+========================================================= */
+
 function clearSpecialRoomEffects() {
   document.body.classList.remove(
     "night-room",
-    "love-room"
+    "love-room",
+    "color-room"
+  );
+
+  document.body.style.removeProperty(
+    "--room-color"
+  );
+
+  document.body.style.removeProperty(
+    "--room-color-soft"
+  );
+
+  document.body.style.removeProperty(
+    "--room-color-glow"
   );
 
   if (specialEffectInterval) {
-    clearInterval(
-      specialEffectInterval
-    );
-
+    clearInterval(specialEffectInterval);
     specialEffectInterval = null;
   }
 
   if (specialEffectsContainer) {
     specialEffectsContainer.innerHTML = "";
   }
+
+  if (colorThemeStyle) {
+    colorThemeStyle.remove();
+    colorThemeStyle = null;
+  }
 }
 
 
-/*
- * NIGHT ROOM
- *
- * Room code:
- * night
- */
+/* =========================================================
+   NIGHT ROOM
+========================================================= */
 
 function createNightStar() {
   const container =
@@ -141,11 +161,6 @@ function createNightStar() {
 
   container.appendChild(star);
 
-  /*
-   * Slowly remove older stars so the
-   * page doesn't collect thousands.
-   */
-
   setTimeout(() => {
     star.remove();
   }, 18000);
@@ -162,17 +177,9 @@ function startNightRoom() {
   const container =
     createSpecialEffectsContainer();
 
-  /*
-   * Initial star field
-   */
-
   for (let i = 0; i < 90; i++) {
     createNightStar();
   }
-
-  /*
-   * Continuously introduce new stars.
-   */
 
   specialEffectInterval =
     setInterval(() => {
@@ -185,12 +192,9 @@ function startNightRoom() {
 }
 
 
-/*
- * LOVE ROOM
- *
- * Room code:
- * love
- */
+/* =========================================================
+   LOVE ROOM
+========================================================= */
 
 function createLoveHeart() {
   const container =
@@ -239,17 +243,9 @@ function startLoveRoom() {
 
   createSpecialEffectsContainer();
 
-  /*
-   * Start with a small number of hearts.
-   */
-
   for (let i = 0; i < 12; i++) {
     createLoveHeart();
   }
-
-  /*
-   * Keep the atmosphere alive.
-   */
 
   specialEffectInterval =
     setInterval(() => {
@@ -258,12 +254,395 @@ function startLoveRoom() {
 }
 
 
+/* =========================================================
+   RANDOM COLOUR ROOM
+========================================================= */
+
 /*
- * Decide which special atmosphere
- * belongs to the current room.
+ * Checks whether the room code is a valid CSS colour NAME.
+ *
+ * Only alphabetic colour names are accepted here.
+ * So "red", "blue", "rebeccapurple", "darkorange",
+ * "lightseagreen", etc. work.
+ *
+ * Things like "#ff0000" or "rgb(...)" are deliberately
+ * ignored because the Easter egg is supposed to be
+ * discovered by typing colour names.
  */
 
+function isColorRoom(roomCode) {
+  const colorName =
+    String(roomCode || "")
+      .trim()
+      .toLowerCase();
+
+  if (!/^[a-z]+$/.test(colorName)) {
+    return false;
+  }
+
+  return CSS.supports(
+    "color",
+    colorName
+  );
+}
+
+
+/*
+ * Creates a colour atmosphere.
+ */
+
+function createColorParticle() {
+  const container =
+    createSpecialEffectsContainer();
+
+  const particle =
+    document.createElement("span");
+
+  particle.className =
+    "color-particle";
+
+  particle.style.left =
+    `${Math.random() * 100}%`;
+
+  particle.style.bottom =
+    `${-10 - Math.random() * 15}%`;
+
+  const size =
+    Math.random() * 5 + 2;
+
+  particle.style.width =
+    `${size}px`;
+
+  particle.style.height =
+    `${size}px`;
+
+  particle.style.animationDuration =
+    `${7 + Math.random() * 9}s`;
+
+  particle.style.animationDelay =
+    `${Math.random() * 3}s`;
+
+  container.appendChild(
+    particle
+  );
+
+  setTimeout(() => {
+    particle.remove();
+  }, 18000);
+}
+
+
+/*
+ * Injects the visual styling dynamically.
+ *
+ * This means you don't have to manually create
+ * CSS for every colour in existence.
+ */
+
+function createColorRoomStyle() {
+
+  if (colorThemeStyle) {
+    colorThemeStyle.remove();
+  }
+
+  colorThemeStyle =
+    document.createElement("style");
+
+  colorThemeStyle.id =
+    "dynamic-color-room-style";
+
+  colorThemeStyle.textContent = `
+    body.color-room {
+      background:
+        radial-gradient(
+          circle at 50% 15%,
+          color-mix(
+            in srgb,
+            var(--room-color) 18%,
+            transparent
+          ),
+          transparent 55%
+        ),
+        #000000;
+      transition:
+        background 1.2s ease,
+        color 1.2s ease;
+    }
+
+    body.color-room .app {
+      background:
+        radial-gradient(
+          circle at 50% 0%,
+          color-mix(
+            in srgb,
+            var(--room-color) 12%,
+            transparent
+          ),
+          transparent 55%
+        ),
+        #03070c;
+
+      border-color:
+        color-mix(
+          in srgb,
+          var(--room-color) 30%,
+          #172331
+        );
+
+      box-shadow:
+        0 20px 80px rgba(0, 0, 0, 0.85),
+        0 0 50px
+        color-mix(
+          in srgb,
+          var(--room-color) 20%,
+          transparent
+        );
+
+      transition:
+        background 1.2s ease,
+        border-color 1.2s ease,
+        box-shadow 1.2s ease;
+    }
+
+    body.color-room .header {
+      border-bottom-color:
+        color-mix(
+          in srgb,
+          var(--room-color) 20%,
+          #111b25
+        );
+    }
+
+    body.color-room .header h1 {
+      color:
+        color-mix(
+          in srgb,
+          var(--room-color) 45%,
+          #ffffff
+        );
+    }
+
+    body.color-room .tagline,
+    body.color-room #status {
+      color:
+        color-mix(
+          in srgb,
+          var(--room-color) 35%,
+          #718292
+        );
+    }
+
+    body.color-room .message {
+      background:
+        color-mix(
+          in srgb,
+          var(--room-color) 8%,
+          #0a121a
+        );
+
+      border-color:
+        color-mix(
+          in srgb,
+          var(--room-color) 18%,
+          #14222f
+        );
+    }
+
+    body.color-room .message.self {
+      background:
+        color-mix(
+          in srgb,
+          var(--room-color) 14%,
+          #0b1a29
+        );
+
+      border-color:
+        color-mix(
+          in srgb,
+          var(--room-color) 30%,
+          #17344b
+        );
+    }
+
+    body.color-room .sender {
+      color:
+        color-mix(
+          in srgb,
+          var(--room-color) 50%,
+          #9bc9e7
+        );
+    }
+
+    body.color-room .message-action,
+    body.color-room .reaction,
+    body.color-room .reaction-bar,
+    body.color-room .message-actions {
+      border-color:
+        color-mix(
+          in srgb,
+          var(--room-color) 28%,
+          #172b3d
+        );
+    }
+
+    body.color-room .reaction {
+      background:
+        color-mix(
+          in srgb,
+          var(--room-color) 12%,
+          #0b1a29
+        );
+    }
+
+    body.color-room .composer {
+      border-top-color:
+        color-mix(
+          in srgb,
+          var(--room-color) 18%,
+          #101923
+        );
+    }
+
+    body.color-room .composer input,
+    body.color-room input {
+      border-color:
+        color-mix(
+          in srgb,
+          var(--room-color) 22%,
+          #172b3d
+        );
+    }
+
+    .color-particle {
+      position: absolute;
+      display: block;
+      border-radius: 50%;
+      pointer-events: none;
+
+      background:
+        var(--room-color);
+
+      box-shadow:
+        0 0 8px
+        color-mix(
+          in srgb,
+          var(--room-color) 75%,
+          transparent
+        );
+
+      opacity: 0;
+
+      animation:
+        colorParticleFloat linear forwards;
+    }
+
+    @keyframes colorParticleFloat {
+
+      0% {
+        transform:
+          translate3d(
+            0,
+            0,
+            0
+          );
+
+        opacity: 0;
+      }
+
+      15% {
+        opacity: 0.55;
+      }
+
+      50% {
+        transform:
+          translate3d(
+            ${Math.random() > 0.5 ? "-" : ""}
+            35px,
+            -50vh,
+            0
+          );
+
+        opacity: 0.35;
+      }
+
+      85% {
+        opacity: 0.15;
+      }
+
+      100% {
+        transform:
+          translate3d(
+            ${Math.random() > 0.5 ? "-" : ""}
+            70px,
+            -105vh,
+            0
+          );
+
+        opacity: 0;
+      }
+    }
+  `;
+
+  document.head.appendChild(
+    colorThemeStyle
+  );
+}
+
+
+/*
+ * Start a colour room.
+ */
+
+function startColorRoom(colorName) {
+
+  clearSpecialRoomEffects();
+
+  const normalizedColor =
+    String(colorName || "")
+      .trim()
+      .toLowerCase();
+
+  document.body.classList.add(
+    "color-room"
+  );
+
+  document.body.style.setProperty(
+    "--room-color",
+    normalizedColor
+  );
+
+  createColorRoomStyle();
+
+  const container =
+    createSpecialEffectsContainer();
+
+  /*
+   * Give the room an immediate atmosphere.
+   */
+
+  for (let i = 0; i < 20; i++) {
+    createColorParticle();
+  }
+
+  /*
+   * Continue creating particles.
+   */
+
+  specialEffectInterval =
+    setInterval(() => {
+
+      createColorParticle();
+
+    }, 650);
+}
+
+
+/* =========================================================
+   DECIDE ROOM THEME
+========================================================= */
+
 function applyRoomTheme(roomCode) {
+
   clearSpecialRoomEffects();
 
   const normalizedRoom =
@@ -271,22 +650,38 @@ function applyRoomTheme(roomCode) {
       .trim()
       .toLowerCase();
 
+
+  /*
+   * NIGHT
+   */
+
   if (normalizedRoom === "night") {
     startNightRoom();
     return;
   }
 
+
+  /*
+   * LOVE
+   */
+
   if (normalizedRoom === "love") {
     startLoveRoom();
     return;
   }
+
+
+  /*
+   * ANY VALID COLOUR NAME
+   */
+
+  if (isColorRoom(normalizedRoom)) {
+    startColorRoom(
+      normalizedRoom
+    );
+    return;
+  }
 }
-
-
-/* =========================================================
-   TIME
-========================================================= */
-
 function formatTime(timestamp) {
   if (!timestamp) return "";
 
