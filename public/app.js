@@ -7,6 +7,10 @@ const namePanel = document.getElementById("namePanel");
 const nameInput = document.getElementById("nameInput");
 const joinButton = document.getElementById("joinButton");
 
+const roomPanel = document.getElementById("roomPanel");
+const roomInput = document.getElementById("roomInput");
+const roomButton = document.getElementById("roomButton");
+
 const changeNameButton = document.getElementById("changeNameButton");
 const nameChangePanel = document.getElementById("nameChangePanel");
 const newNameInput = document.getElementById("newNameInput");
@@ -16,17 +20,35 @@ const saveNameButton = document.getElementById("saveNameButton");
 const status = document.getElementById("status");
 const onlineDot = document.getElementById("onlineDot");
 
-const protocol = location.protocol === "https:" ? "wss" : "ws";
-const serverUrl = `${protocol}://${location.host}`;
+const protocol =
+  location.protocol === "https:" ? "wss" : "ws";
 
-const socket = new WebSocket(serverUrl);
+const serverUrl =
+  `${protocol}://${location.host}`;
+
+const socket =
+  new WebSocket(serverUrl);
 
 let joined = false;
+let roomJoined = false;
 let replyTarget = null;
 
-let savedUsername = localStorage.getItem("bovarea_username");
+let savedUsername =
+  localStorage.getItem("bovarea_username");
 
-const reactionOptions = ["👍", "❤️", "😂", "😭", "🙏", "🥀"];
+let savedRoom =
+  localStorage.getItem("bovarea_room");
+
+let currentRoom = null;
+
+const reactionOptions = [
+  "👍",
+  "❤️",
+  "😂",
+  "😭",
+  "🙏",
+  "🥀"
+];
 
 
 /* =========================
@@ -36,9 +58,12 @@ const reactionOptions = ["👍", "❤️", "😂", "😭", "🙏", "🥀"];
 function formatTime(timestamp) {
   if (!timestamp) return "";
 
-  const date = new Date(timestamp);
+  const date =
+    new Date(timestamp);
 
-  if (Number.isNaN(date.getTime())) return "";
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
 
   return date.toLocaleTimeString([], {
     hour: "numeric",
@@ -54,42 +79,76 @@ function formatTime(timestamp) {
 function setReplyTarget(replyData) {
   replyTarget = replyData;
 
-  let replyPreview = document.getElementById("replyPreview");
+  let replyPreview =
+    document.getElementById(
+      "replyPreview"
+    );
 
   if (!replyPreview) {
-    replyPreview = document.createElement("div");
-    replyPreview.id = "replyPreview";
-    replyPreview.className = "reply-preview";
+    replyPreview =
+      document.createElement("div");
 
-    const composer = document.querySelector(".composer");
+    replyPreview.id =
+      "replyPreview";
+
+    replyPreview.className =
+      "reply-preview";
+
+    const composer =
+      document.querySelector(
+        ".composer"
+      );
 
     if (composer) {
-      composer.insertBefore(replyPreview, composer.firstChild);
+      composer.insertBefore(
+        replyPreview,
+        composer.firstChild
+      );
     }
   }
 
   replyPreview.innerHTML = "";
 
-  const content = document.createElement("div");
-  content.className = "reply-preview-content";
+  const content =
+    document.createElement("div");
 
-  const title = document.createElement("div");
-  title.className = "reply-preview-title";
-  title.textContent = `Replying to ${replyData.sender}`;
+  content.className =
+    "reply-preview-content";
 
-  const message = document.createElement("div");
-  message.className = "reply-preview-message";
-  message.textContent = replyData.message;
+  const title =
+    document.createElement("div");
+
+  title.className =
+    "reply-preview-title";
+
+  title.textContent =
+    `Replying to ${replyData.sender}`;
+
+  const message =
+    document.createElement("div");
+
+  message.className =
+    "reply-preview-message";
+
+  message.textContent =
+    replyData.message;
 
   content.appendChild(title);
   content.appendChild(message);
 
-  const cancelButton = document.createElement("button");
+  const cancelButton =
+    document.createElement("button");
+
   cancelButton.type = "button";
-  cancelButton.className = "reply-cancel";
+  cancelButton.className =
+    "reply-cancel";
+
   cancelButton.textContent = "×";
 
-  cancelButton.addEventListener("click", cancelReply);
+  cancelButton.addEventListener(
+    "click",
+    cancelReply
+  );
 
   replyPreview.appendChild(content);
   replyPreview.appendChild(cancelButton);
@@ -101,7 +160,10 @@ function setReplyTarget(replyData) {
 function cancelReply() {
   replyTarget = null;
 
-  const replyPreview = document.getElementById("replyPreview");
+  const replyPreview =
+    document.getElementById(
+      "replyPreview"
+    );
 
   if (replyPreview) {
     replyPreview.remove();
@@ -109,24 +171,47 @@ function cancelReply() {
 }
 
 
-function addReplyPreview(wrapper, replyTo) {
+function addReplyPreview(
+  wrapper,
+  replyTo
+) {
   if (!replyTo) return;
 
-  const replyElement = document.createElement("div");
-  replyElement.className = "message-reply";
+  const replyElement =
+    document.createElement("div");
 
-  const replySender = document.createElement("div");
-  replySender.className = "message-reply-sender";
-  replySender.textContent = replyTo.sender;
+  replyElement.className =
+    "message-reply";
 
-  const replyText = document.createElement("div");
-  replyText.className = "message-reply-text";
-  replyText.textContent = replyTo.message;
+  const replySender =
+    document.createElement("div");
 
-  replyElement.appendChild(replySender);
-  replyElement.appendChild(replyText);
+  replySender.className =
+    "message-reply-sender";
 
-  wrapper.appendChild(replyElement);
+  replySender.textContent =
+    replyTo.sender;
+
+  const replyText =
+    document.createElement("div");
+
+  replyText.className =
+    "message-reply-text";
+
+  replyText.textContent =
+    replyTo.message;
+
+  replyElement.appendChild(
+    replySender
+  );
+
+  replyElement.appendChild(
+    replyText
+  );
+
+  wrapper.appendChild(
+    replyElement
+  );
 }
 
 
@@ -134,84 +219,163 @@ function addReplyPreview(wrapper, replyTo) {
    REACTIONS
 ========================= */
 
-function sendReaction(messageId, reaction) {
-  if (!joined || socket.readyState !== WebSocket.OPEN) {
+function sendReaction(
+  messageId,
+  reaction
+) {
+  if (
+    !joined ||
+    !roomJoined ||
+    socket.readyState !==
+      WebSocket.OPEN
+  ) {
     return;
   }
 
-  socket.send(JSON.stringify({
-    type: "reaction",
-    messageId,
-    reaction
-  }));
+  socket.send(
+    JSON.stringify({
+      type: "reaction",
+      messageId,
+      reaction
+    })
+  );
 }
 
 
-function createReactionBar(messageId) {
-  const bar = document.createElement("div");
-  bar.className = "reaction-bar";
+function createReactionBar(
+  messageId
+) {
+  const bar =
+    document.createElement("div");
 
-  reactionOptions.forEach((reaction) => {
-    const button = document.createElement("button");
+  bar.className =
+    "reaction-bar";
 
-    button.className = "reaction-button";
-    button.type = "button";
-    button.textContent = reaction;
+  reactionOptions.forEach(
+    (reaction) => {
 
-    button.addEventListener("click", (event) => {
-      event.stopPropagation();
+      const button =
+        document.createElement(
+          "button"
+        );
 
-      sendReaction(messageId, reaction);
+      button.className =
+        "reaction-button";
 
-      const wrapper = button.closest(".message");
+      button.type = "button";
 
-      if (wrapper) {
-        wrapper.classList.remove("reactions-open");
-      }
-    });
+      button.textContent =
+        reaction;
 
-    bar.appendChild(button);
-  });
+      button.addEventListener(
+        "click",
+        (event) => {
+
+          event.stopPropagation();
+
+          sendReaction(
+            messageId,
+            reaction
+          );
+
+          const wrapper =
+            button.closest(
+              ".message"
+            );
+
+          if (wrapper) {
+            wrapper.classList.remove(
+              "reactions-open"
+            );
+          }
+        }
+      );
+
+      bar.appendChild(button);
+    }
+  );
 
   return bar;
 }
 
 
-function updateReactionDisplay(wrapper, reactions) {
-  let reactionsElement = wrapper.querySelector(".reactions");
+function updateReactionDisplay(
+  wrapper,
+  reactions
+) {
+  let reactionsElement =
+    wrapper.querySelector(
+      ".reactions"
+    );
 
   if (!reactionsElement) {
-    reactionsElement = document.createElement("div");
-    reactionsElement.className = "reactions";
-    wrapper.appendChild(reactionsElement);
+
+    reactionsElement =
+      document.createElement(
+        "div"
+      );
+
+    reactionsElement.className =
+      "reactions";
+
+    wrapper.appendChild(
+      reactionsElement
+    );
   }
 
-  reactionsElement.innerHTML = "";
+  reactionsElement.innerHTML =
+    "";
 
-  Object.entries(reactions || {}).forEach(([reaction, users]) => {
-    if (!Array.isArray(users) || users.length === 0) {
-      return;
-    }
+  Object.entries(
+    reactions || {}
+  ).forEach(
+    ([reaction, users]) => {
 
-    const reactionElement = document.createElement("button");
+      if (
+        !Array.isArray(users) ||
+        users.length === 0
+      ) {
+        return;
+      }
 
-    reactionElement.className = "reaction";
-    reactionElement.type = "button";
-    reactionElement.textContent = `${reaction} ${users.length}`;
+      const reactionElement =
+        document.createElement(
+          "button"
+        );
 
-    reactionElement.addEventListener("click", (event) => {
-      event.stopPropagation();
+      reactionElement.className =
+        "reaction";
 
-      sendReaction(
-        wrapper.dataset.messageId,
-        reaction
+      reactionElement.type =
+        "button";
+
+      reactionElement.textContent =
+        `${reaction} ${users.length}`;
+
+      reactionElement.addEventListener(
+        "click",
+        (event) => {
+
+          event.stopPropagation();
+
+          sendReaction(
+            wrapper.dataset.messageId,
+            reaction
+          );
+        }
       );
-    });
 
-    reactionsElement.appendChild(reactionElement);
-  });
+      reactionsElement.appendChild(
+        reactionElement
+      );
+    }
+  );
 
-  if (Object.keys(reactions || {}).length === 0) {
+  if (
+    Object.keys(
+      reactions || {}
+    ).length === 0
+  ) {
     reactionsElement.remove();
   }
 }
@@ -227,44 +391,84 @@ function createActionMenu(
   sender,
   message
 ) {
-  const actionMenu = document.createElement("div");
-  actionMenu.className = "message-actions";
+  const actionMenu =
+    document.createElement("div");
 
-  const replyButton = document.createElement("button");
+  actionMenu.className =
+    "message-actions";
+
+
+  const replyButton =
+    document.createElement(
+      "button"
+    );
 
   replyButton.type = "button";
-  replyButton.className = "message-action";
-  replyButton.textContent = "↩ Reply";
 
-  replyButton.addEventListener("click", (event) => {
-    event.stopPropagation();
+  replyButton.className =
+    "message-action";
 
-    setReplyTarget({
-      id: messageId,
-      sender,
-      message
-    });
-
-    wrapper.classList.remove("actions-open");
-  });
+  replyButton.textContent =
+    "↩ Reply";
 
 
-  const reactButton = document.createElement("button");
+  replyButton.addEventListener(
+    "click",
+    (event) => {
+
+      event.stopPropagation();
+
+      setReplyTarget({
+        id: messageId,
+        sender,
+        message
+      });
+
+      wrapper.classList.remove(
+        "actions-open"
+      );
+    }
+  );
+
+
+  const reactButton =
+    document.createElement(
+      "button"
+    );
 
   reactButton.type = "button";
-  reactButton.className = "message-action";
-  reactButton.textContent = "React";
 
-  reactButton.addEventListener("click", (event) => {
-    event.stopPropagation();
+  reactButton.className =
+    "message-action";
 
-    wrapper.classList.remove("actions-open");
-    wrapper.classList.add("reactions-open");
-  });
+  reactButton.textContent =
+    "React";
 
 
-  actionMenu.appendChild(replyButton);
-  actionMenu.appendChild(reactButton);
+  reactButton.addEventListener(
+    "click",
+    (event) => {
+
+      event.stopPropagation();
+
+      wrapper.classList.remove(
+        "actions-open"
+      );
+
+      wrapper.classList.add(
+        "reactions-open"
+      );
+    }
+  );
+
+
+  actionMenu.appendChild(
+    replyButton
+  );
+
+  actionMenu.appendChild(
+    reactButton
+  );
 
   return actionMenu;
 }
@@ -283,101 +487,161 @@ function addMessageToChat(
   reactions = {},
   replyTo = null
 ) {
-  const wrapper = document.createElement("div");
+  const wrapper =
+    document.createElement(
+      "div"
+    );
 
-  wrapper.className = self
-    ? "message self"
-    : "message";
+  wrapper.className =
+    self
+      ? "message self"
+      : "message";
+
 
   if (messageId) {
-    wrapper.dataset.messageId = messageId;
+    wrapper.dataset.messageId =
+      messageId;
   }
 
 
-  const senderElement = document.createElement("div");
+  const senderElement =
+    document.createElement(
+      "div"
+    );
 
-  senderElement.className = "sender";
-  senderElement.textContent = sender;
+  senderElement.className =
+    "sender";
+
+  senderElement.textContent =
+    sender;
 
 
-  const textElement = document.createElement("div");
+  const textElement =
+    document.createElement(
+      "div"
+    );
 
-  textElement.className = "text";
-  textElement.textContent = message;
+  textElement.className =
+    "text";
+
+  textElement.textContent =
+    message;
 
 
-  wrapper.appendChild(senderElement);
+  wrapper.appendChild(
+    senderElement
+  );
+
 
   addReplyPreview(
     wrapper,
     replyTo
   );
 
-  wrapper.appendChild(textElement);
+
+  wrapper.appendChild(
+    textElement
+  );
 
 
   if (time) {
-    const timeElement = document.createElement("div");
 
-    timeElement.className = "message-time";
-    timeElement.textContent = formatTime(time);
+    const timeElement =
+      document.createElement(
+        "div"
+      );
 
-    wrapper.appendChild(timeElement);
+    timeElement.className =
+      "message-time";
+
+    timeElement.textContent =
+      formatTime(time);
+
+    wrapper.appendChild(
+      timeElement
+    );
   }
 
 
   if (messageId) {
-    const actionMenu = createActionMenu(
-      wrapper,
-      messageId,
-      sender,
-      message
-    );
 
-    const reactionBar = createReactionBar(
-      messageId
-    );
-
-    wrapper.appendChild(actionMenu);
-    wrapper.appendChild(reactionBar);
-
-
-    wrapper.addEventListener("click", (event) => {
-
-      if (
-        event.target.closest(".message-actions") ||
-        event.target.closest(".reaction-bar") ||
-        event.target.closest(".reactions")
-      ) {
-        return;
-      }
-
-
-      const allMessages =
-        document.querySelectorAll(".message");
-
-
-      allMessages.forEach((otherMessage) => {
-        if (otherMessage !== wrapper) {
-          otherMessage.classList.remove(
-            "actions-open"
-          );
-
-          otherMessage.classList.remove(
-            "reactions-open"
-          );
-        }
-      });
-
-
-      wrapper.classList.toggle(
-        "actions-open"
+    const actionMenu =
+      createActionMenu(
+        wrapper,
+        messageId,
+        sender,
+        message
       );
-    });
+
+    const reactionBar =
+      createReactionBar(
+        messageId
+      );
+
+    wrapper.appendChild(
+      actionMenu
+    );
+
+    wrapper.appendChild(
+      reactionBar
+    );
+
+
+    wrapper.addEventListener(
+      "click",
+      (event) => {
+
+        if (
+          event.target.closest(
+            ".message-actions"
+          ) ||
+          event.target.closest(
+            ".reaction-bar"
+          ) ||
+          event.target.closest(
+            ".reactions"
+          )
+        ) {
+          return;
+        }
+
+
+        const allMessages =
+          document.querySelectorAll(
+            ".message"
+          );
+
+
+        allMessages.forEach(
+          (otherMessage) => {
+
+            if (
+              otherMessage !==
+              wrapper
+            ) {
+
+              otherMessage.classList.remove(
+                "actions-open"
+              );
+
+              otherMessage.classList.remove(
+                "reactions-open"
+              );
+            }
+          }
+        );
+
+
+        wrapper.classList.toggle(
+          "actions-open"
+        );
+      }
+    );
   }
 
 
   if (reactions) {
+
     updateReactionDisplay(
       wrapper,
       reactions
@@ -385,7 +649,9 @@ function addMessageToChat(
   }
 
 
-  chatWindow.appendChild(wrapper);
+  chatWindow.appendChild(
+    wrapper
+  );
 
   chatWindow.scrollTop =
     chatWindow.scrollHeight;
@@ -396,14 +662,23 @@ function addMessageToChat(
    SYSTEM MESSAGE
 ========================= */
 
-function addSystemMessage(message) {
+function addSystemMessage(
+  message
+) {
   const element =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
-  element.className = "system";
-  element.textContent = message;
+  element.className =
+    "system";
 
-  chatWindow.appendChild(element);
+  element.textContent =
+    message;
+
+  chatWindow.appendChild(
+    element
+  );
 
   chatWindow.scrollTop =
     chatWindow.scrollHeight;
@@ -412,7 +687,9 @@ function addSystemMessage(message) {
 
 function addHistoryDivider() {
   const element =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   element.className =
     "history-divider";
@@ -420,7 +697,9 @@ function addHistoryDivider() {
   element.textContent =
     "While you were away";
 
-  chatWindow.appendChild(element);
+  chatWindow.appendChild(
+    element
+  );
 }
 
 
@@ -428,8 +707,9 @@ function addHistoryDivider() {
    CONNECTION
 ========================= */
 
-function setConnected(connected) {
-
+function setConnected(
+  connected
+) {
   onlineDot.classList.toggle(
     "connected",
     connected
@@ -457,8 +737,11 @@ function updateOnlineUsers(
 
 
   if (!onlinePanel) {
+
     onlinePanel =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     onlinePanel.id =
       "onlinePanel";
@@ -468,7 +751,9 @@ function updateOnlineUsers(
 
 
     const header =
-      document.querySelector(".header");
+      document.querySelector(
+        ".header"
+      );
 
     if (header) {
       header.appendChild(
@@ -478,11 +763,14 @@ function updateOnlineUsers(
   }
 
 
-  onlinePanel.innerHTML = "";
+  onlinePanel.innerHTML =
+    "";
 
 
   const countElement =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   countElement.className =
     "online-count";
@@ -498,27 +786,33 @@ function updateOnlineUsers(
   if (count > 0) {
 
     const usersElement =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     usersElement.className =
       "online-users";
 
 
-    users.forEach((username) => {
+    users.forEach(
+      (username) => {
 
-      const userElement =
-        document.createElement("div");
+        const userElement =
+          document.createElement(
+            "div"
+          );
 
-      userElement.className =
-        "online-user";
+        userElement.className =
+          "online-user";
 
-      userElement.textContent =
-        `● ${username}`;
+        userElement.textContent =
+          `● ${username}`;
 
-      usersElement.appendChild(
-        userElement
-      );
-    });
+        usersElement.appendChild(
+          userElement
+        );
+      }
+    );
 
 
     onlinePanel.appendChild(
@@ -529,10 +823,83 @@ function updateOnlineUsers(
 
 
 /* =========================
-   JOIN
+   JOIN ROOM
 ========================= */
 
-function joinChat(name) {
+function enterRoom(
+  roomCode
+) {
+
+  roomCode =
+    String(roomCode || "")
+      .trim()
+      .slice(0, 100);
+
+
+  if (!roomCode) {
+    roomInput.focus();
+    return;
+  }
+
+
+  if (
+    socket.readyState !==
+    WebSocket.OPEN
+  ) {
+    return;
+  }
+
+
+  localStorage.setItem(
+    "bovarea_room",
+    roomCode
+  );
+
+
+  /*
+   * If the user already has a
+   * username, enter immediately.
+   */
+
+  if (savedUsername) {
+
+    joinChat(
+      savedUsername,
+      roomCode
+    );
+
+    return;
+  }
+
+
+  /*
+   * Otherwise remember the room
+   * and show the username panel.
+   */
+
+  roomJoined = false;
+
+  currentRoom =
+    roomCode;
+
+  roomPanel.style.display =
+    "none";
+
+  namePanel.style.display =
+    "block";
+
+  nameInput.focus();
+}
+
+
+/* =========================
+   JOIN CHAT
+========================= */
+
+function joinChat(
+  name,
+  roomCode = currentRoom
+) {
 
   const username =
     String(name || "")
@@ -540,8 +907,15 @@ function joinChat(name) {
       .slice(0, 24);
 
 
+  roomCode =
+    String(roomCode || "")
+      .trim()
+      .slice(0, 100);
+
+
   if (
     !username ||
+    !roomCode ||
     socket.readyState !==
       WebSocket.OPEN
   ) {
@@ -554,13 +928,24 @@ function joinChat(name) {
     username
   );
 
-  savedUsername = username;
+  localStorage.setItem(
+    "bovarea_room",
+    roomCode
+  );
+
+
+  savedUsername =
+    username;
+
+  currentRoom =
+    roomCode;
 
 
   socket.send(
     JSON.stringify({
       type: "join",
-      name: username
+      name: username,
+      roomCode
     })
   );
 
@@ -570,6 +955,12 @@ function joinChat(name) {
 
   if (namePanel) {
     namePanel.style.display =
+      "none";
+  }
+
+
+  if (roomPanel) {
+    roomPanel.style.display =
       "none";
   }
 
@@ -616,6 +1007,7 @@ function openNameChangePanel() {
 
 
   newNameInput.focus();
+
   newNameInput.select();
 }
 
@@ -625,7 +1017,8 @@ function closeNameChangePanel() {
   nameChangePanel.style.display =
     "none";
 
-  newNameInput.value = "";
+  newNameInput.value =
+    "";
 }
 
 
@@ -653,7 +1046,9 @@ function saveNewUsername() {
     username ===
     currentUsername
   ) {
+
     closeNameChangePanel();
+
     return;
   }
 
@@ -672,10 +1067,10 @@ function saveNewUsername() {
 
 
   /*
-   * Reconnect with the new username.
-   * Reloading is simple and reliable for the
-   * current version of Bovarea.
+   * Reloading reconnects using
+   * the new username and same room.
    */
+
   window.location.reload();
 }
 
@@ -684,9 +1079,35 @@ function saveNewUsername() {
    BUTTON EVENTS
 ========================= */
 
+roomButton.addEventListener(
+  "click",
+  () => {
+
+    enterRoom(
+      roomInput.value
+    );
+  }
+);
+
+
+roomInput.addEventListener(
+  "keydown",
+  (event) => {
+
+    if (event.key === "Enter") {
+
+      event.preventDefault();
+
+      roomButton.click();
+    }
+  }
+);
+
+
 joinButton.addEventListener(
   "click",
   () => {
+
     joinChat(
       nameInput.value
     );
@@ -699,6 +1120,7 @@ nameInput.addEventListener(
   (event) => {
 
     if (event.key === "Enter") {
+
       event.preventDefault();
 
       joinButton.click();
@@ -706,6 +1128,10 @@ nameInput.addEventListener(
   }
 );
 
+
+/* =========================
+   CHANGE NAME BUTTON
+========================= */
 
 if (changeNameButton) {
 
@@ -757,6 +1183,7 @@ if (newNameInput) {
     (event) => {
 
       if (event.key === "Enter") {
+
         event.preventDefault();
 
         saveNewUsername();
@@ -764,6 +1191,7 @@ if (newNameInput) {
 
 
       if (event.key === "Escape") {
+
         event.preventDefault();
 
         closeNameChangePanel();
@@ -791,6 +1219,7 @@ chatForm.addEventListener(
     if (
       !message ||
       !joined ||
+      !roomJoined ||
       socket.readyState !==
         WebSocket.OPEN
     ) {
@@ -810,7 +1239,8 @@ chatForm.addEventListener(
     );
 
 
-    messageInput.value = "";
+    messageInput.value =
+      "";
 
     cancelReply();
 
@@ -830,14 +1260,24 @@ socket.addEventListener(
     setConnected(true);
 
 
+    /*
+     * Don't automatically join yet.
+     *
+     * We want the user to choose
+     * a room first.
+     */
+
+    if (savedRoom) {
+
+      roomInput.value =
+        savedRoom;
+    }
+
+
     if (savedUsername) {
 
       nameInput.value =
         savedUsername;
-
-      joinChat(
-        savedUsername
-      );
     }
   }
 );
@@ -855,10 +1295,12 @@ socket.addEventListener(
 
 
     try {
+
       data =
         JSON.parse(
           event.data
         );
+
     } catch {
 
       addSystemMessage(
@@ -869,7 +1311,31 @@ socket.addEventListener(
     }
 
 
-    if (data.type === "system") {
+    /* ROOM CONFIRMATION */
+
+    if (
+      data.type === "room"
+    ) {
+
+      currentRoom =
+        data.roomCode;
+
+      roomJoined =
+        true;
+
+      roomPanel.style.display =
+        "none";
+
+      namePanel.style.display =
+        "none";
+    }
+
+
+    /* SYSTEM */
+
+    if (
+      data.type === "system"
+    ) {
 
       addSystemMessage(
         data.message
@@ -877,7 +1343,11 @@ socket.addEventListener(
     }
 
 
-    if (data.type === "users") {
+    /* ONLINE USERS */
+
+    if (
+      data.type === "users"
+    ) {
 
       updateOnlineUsers(
         data.users,
@@ -886,7 +1356,11 @@ socket.addEventListener(
     }
 
 
-    if (data.type === "history") {
+    /* HISTORY */
+
+    if (
+      data.type === "history"
+    ) {
 
       if (
         Array.isArray(
@@ -917,7 +1391,11 @@ socket.addEventListener(
     }
 
 
-    if (data.type === "chat") {
+    /* CHAT */
+
+    if (
+      data.type === "chat"
+    ) {
 
       addMessageToChat(
         data.sender,
@@ -931,7 +1409,11 @@ socket.addEventListener(
     }
 
 
-    if (data.type === "reaction") {
+    /* REACTION */
+
+    if (
+      data.type === "reaction"
+    ) {
 
       const messageElement =
         document.querySelector(
@@ -954,7 +1436,7 @@ socket.addEventListener(
 
 
 /* =========================
-   WEBSOCKET CLOSE
+   CLOSE
 ========================= */
 
 socket.addEventListener(
@@ -962,6 +1444,9 @@ socket.addEventListener(
   () => {
 
     setConnected(false);
+
+    joined = false;
+    roomJoined = false;
 
     messageInput.disabled =
       true;
@@ -989,7 +1474,7 @@ socket.addEventListener(
 
 
 /* =========================
-   WEBSOCKET ERROR
+   ERROR
 ========================= */
 
 socket.addEventListener(
