@@ -6,49 +6,120 @@
   <title>Bovarea</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+
   <main class="app">
 
     <header class="header">
+
       <div>
         <h1>Bovarea</h1>
-        <p class="tagline">Where quiet conversations begin...</p>
-        <p id="status">Connecting...</p>
+
+        <p class="tagline">
+          Where quiet conversations begin...
+        </p>
+
+        <p id="status">
+          Connecting...
+        </p>
       </div>
 
       <div class="header-right">
+
         <button
           id="changeNameButton"
           class="change-name-button"
           type="button"
-          title="Change username"
         >
           Change name
         </button>
 
-        <div class="online-dot" id="onlineDot"></div>
+        <div
+          class="online-dot"
+          id="onlineDot"
+        ></div>
+
       </div>
+
     </header>
 
-    <section class="name-panel" id="namePanel">
-      <label for="nameInput">Choose a username</label>
+
+    <!-- ROOM PANEL -->
+
+    <section
+      class="room-panel"
+      id="roomPanel"
+    >
+
+      <label for="roomInput">
+        Enter room code
+      </label>
+
+      <div class="room-row">
+
+        <input
+          id="roomInput"
+          maxlength="100"
+          autocomplete="off"
+          placeholder="Any room code..."
+        >
+
+        <button
+          id="roomButton"
+          type="button"
+        >
+          Enter
+        </button>
+
+      </div>
+
+      <p class="room-hint">
+        Anyone using the same code enters the same room.
+      </p>
+
+    </section>
+
+
+    <!-- USERNAME PANEL -->
+
+    <section
+      class="name-panel"
+      id="namePanel"
+    >
+
+      <label for="nameInput">
+        Choose a username
+      </label>
 
       <div class="name-row">
+
         <input
           id="nameInput"
           maxlength="24"
-          placeholder="Your name"
           autocomplete="off"
+          placeholder="Your name"
         >
 
-        <button id="joinButton" type="button">
+        <button
+          id="joinButton"
+          type="button"
+        >
           Join
         </button>
+
       </div>
+
     </section>
 
-    <!-- Change username panel -->
-    <section class="name-change-panel" id="nameChangePanel">
+
+    <!-- CHANGE NAME PANEL -->
+
+    <section
+      class="name-change-panel"
+      id="nameChangePanel"
+    >
+
       <div class="name-change-title">
         Change username
       </div>
@@ -56,28 +127,34 @@
       <input
         id="newNameInput"
         maxlength="24"
-        placeholder="New username"
         autocomplete="off"
+        placeholder="New username"
       >
 
       <div class="name-change-buttons">
+
         <button
           id="cancelNameButton"
-          type="button"
           class="name-cancel-button"
+          type="button"
         >
           Cancel
         </button>
 
         <button
           id="saveNameButton"
-          type="button"
           class="name-save-button"
+          type="button"
         >
           Save
         </button>
+
       </div>
+
     </section>
+
+
+    <!-- CHAT -->
 
     <section
       class="chat-window"
@@ -85,7 +162,14 @@
       aria-live="polite"
     ></section>
 
-    <form class="composer" id="chatForm">
+
+    <!-- COMPOSER -->
+
+    <form
+      class="composer"
+      id="chatForm"
+    >
+
       <input
         id="message-input"
         maxlength="500"
@@ -102,10 +186,12 @@
       >
         ➤
       </button>
+
     </form>
 
   </main>
 
   <script src="app.js"></script>
+
 </body>
 </html>
