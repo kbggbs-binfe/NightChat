@@ -90,20 +90,31 @@ function clearSpecialRoomEffects() {
   document.body.classList.remove(
     "night-room",
     "love-room",
-    "color-room"
+    "color-room",
+
+    "dream-room",
+    "ocean-room",
+    "spring-room",
+    "autumn-room",
+    "winter-room",
+    "cosmos-room",
+    "rain-room",
+    "mist-room",
+    "sunset-room",
+    "forest-room",
+    "ember-room",
+    "candle-room",
+    "aurora-room",
+    "feather-room",
+    "stardust-room",
+    "butterfly-room",
+    "meadow-room",
+    "solitude-room"
   );
 
-  document.body.style.removeProperty(
-    "--room-color"
-  );
-
-  document.body.style.removeProperty(
-    "--room-color-soft"
-  );
-
-  document.body.style.removeProperty(
-    "--room-color-glow"
-  );
+  document.body.style.removeProperty("--room-color");
+  document.body.style.removeProperty("--room-color-soft");
+  document.body.style.removeProperty("--room-color-glow");
 
   if (specialEffectInterval) {
     clearInterval(specialEffectInterval);
@@ -122,18 +133,70 @@ function clearSpecialRoomEffects() {
 
 
 /* =========================================================
-   NIGHT ROOM
+   GENERIC PARTICLE
 ========================================================= */
 
-function createNightStar() {
+function createRoomParticle(
+  className,
+  content = ""
+) {
   const container =
     createSpecialEffectsContainer();
 
-  const star =
+  const particle =
     document.createElement("span");
 
-  star.className =
-    "night-star";
+  particle.className = className;
+  particle.textContent = content;
+
+  particle.style.left =
+    `${Math.random() * 100}%`;
+
+  particle.style.top =
+    `${Math.random() * 100}%`;
+
+  particle.style.setProperty(
+    "--random-x",
+    `${(Math.random() - 0.5) * 160}px`
+  );
+
+  particle.style.setProperty(
+    "--random-y",
+    `${(Math.random() - 0.5) * 160}px`
+  );
+
+  particle.style.setProperty(
+    "--random-rotation",
+    `${(Math.random() - 0.5) * 80}deg`
+  );
+
+  particle.style.setProperty(
+    "--random-duration",
+    `${6 + Math.random() * 10}s`
+  );
+
+  particle.style.setProperty(
+    "--random-delay",
+    `${Math.random() * -8}s`
+  );
+
+  container.appendChild(particle);
+
+  setTimeout(() => {
+    particle.remove();
+  }, 20000);
+
+  return particle;
+}
+
+
+/* =========================================================
+   NIGHT
+========================================================= */
+
+function createNightStar() {
+  const star =
+    createRoomParticle("night-star");
 
   const size =
     Math.random() * 2.5 + 1;
@@ -155,24 +218,13 @@ function createNightStar() {
 
   star.style.animationDelay =
     `${Math.random() * -10}s, ${Math.random() * -4}s`;
-
-  container.appendChild(star);
-
-  setTimeout(() => {
-    star.remove();
-  }, 18000);
 }
 
 
 function startNightRoom() {
   clearSpecialRoomEffects();
 
-  document.body.classList.add(
-    "night-room"
-  );
-
-  const container =
-    createSpecialEffectsContainer();
+  document.body.classList.add("night-room");
 
   for (let i = 0; i < 90; i++) {
     createNightStar();
@@ -180,39 +232,31 @@ function startNightRoom() {
 
   specialEffectInterval =
     setInterval(() => {
-
       for (let i = 0; i < 3; i++) {
         createNightStar();
       }
-
     }, 900);
 }
 
 
 /* =========================================================
-   LOVE ROOM
+   LOVE
 ========================================================= */
 
 function createLoveHeart() {
-  const container =
-    createSpecialEffectsContainer();
-
   const heart =
-    document.createElement("span");
-
-  heart.className =
-    "love-heart";
-
-  heart.textContent =
-    Math.random() > 0.5
-      ? "♥"
-      : "♡";
+    createRoomParticle(
+      "love-heart",
+      Math.random() > 0.5 ? "♥" : "♡"
+    );
 
   heart.style.left =
     `${Math.random() * 100}%`;
 
   heart.style.bottom =
     `${-5 - Math.random() * 10}%`;
+
+  heart.style.top = "auto";
 
   heart.style.fontSize =
     `${12 + Math.random() * 16}px`;
@@ -222,23 +266,13 @@ function createLoveHeart() {
 
   heart.style.animationDelay =
     `${Math.random() * 2}s`;
-
-  container.appendChild(heart);
-
-  setTimeout(() => {
-    heart.remove();
-  }, 18000);
 }
 
 
 function startLoveRoom() {
   clearSpecialRoomEffects();
 
-  document.body.classList.add(
-    "love-room"
-  );
-
-  createSpecialEffectsContainer();
+  document.body.classList.add("love-room");
 
   for (let i = 0; i < 12; i++) {
     createLoveHeart();
@@ -252,20 +286,609 @@ function startLoveRoom() {
 
 
 /* =========================================================
-   RANDOM COLOUR ROOM
+   DREAM
+   Soft clouds drifting slowly
 ========================================================= */
 
-/*
- * Checks whether the room code is a valid CSS colour NAME.
- *
- * Only alphabetic colour names are accepted here.
- * So "red", "blue", "rebeccapurple", "darkorange",
- * "lightseagreen", etc. work.
- *
- * Things like "#ff0000" or "rgb(...)" are deliberately
- * ignored because the Easter egg is supposed to be
- * discovered by typing colour names.
- */
+function createDreamCloud() {
+  const cloud =
+    createRoomParticle("dream-cloud", "☁");
+
+  cloud.style.left =
+    `${-10 + Math.random() * 110}%`;
+
+  cloud.style.top =
+    `${5 + Math.random() * 55}%`;
+
+  cloud.style.fontSize =
+    `${45 + Math.random() * 55}px`;
+
+  cloud.style.opacity =
+    `${0.12 + Math.random() * 0.18}`;
+}
+
+
+function startDreamRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("dream-room");
+
+  for (let i = 0; i < 10; i++) {
+    createDreamCloud();
+  }
+
+  specialEffectInterval =
+    setInterval(createDreamCloud, 3500);
+}
+
+
+/* =========================================================
+   OCEAN
+   Bubbles rising upward
+========================================================= */
+
+function createOceanBubble() {
+  const bubble =
+    createRoomParticle("ocean-bubble");
+
+  const size =
+    5 + Math.random() * 22;
+
+  bubble.style.width =
+    `${size}px`;
+
+  bubble.style.height =
+    `${size}px`;
+
+  bubble.style.left =
+    `${Math.random() * 100}%`;
+
+  bubble.style.top =
+    `${75 + Math.random() * 25}%`;
+
+  bubble.style.animationDuration =
+    `${7 + Math.random() * 8}s`;
+}
+
+
+function startOceanRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("ocean-room");
+
+  for (let i = 0; i < 25; i++) {
+    createOceanBubble();
+  }
+
+  specialEffectInterval =
+    setInterval(createOceanBubble, 500);
+}
+
+
+/* =========================================================
+   SPRING
+   Flower petals
+========================================================= */
+
+function createSpringPetal() {
+  const petal =
+    createRoomParticle(
+      "spring-petal",
+      Math.random() > 0.5 ? "✿" : "❀"
+    );
+
+  petal.style.left =
+    `${Math.random() * 100}%`;
+
+  petal.style.top = "-30px";
+
+  petal.style.fontSize =
+    `${10 + Math.random() * 12}px`;
+
+  petal.style.animationDuration =
+    `${6 + Math.random() * 7}s`;
+}
+
+
+function startSpringRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("spring-room");
+
+  for (let i = 0; i < 15; i++) {
+    createSpringPetal();
+  }
+
+  specialEffectInterval =
+    setInterval(createSpringPetal, 700);
+}
+
+
+/* =========================================================
+   AUTUMN
+   Falling leaves
+========================================================= */
+
+function createAutumnLeaf() {
+  const leaf =
+    createRoomParticle(
+      "autumn-leaf",
+      Math.random() > 0.5 ? "🍂" : "🍁"
+    );
+
+  leaf.style.left =
+    `${Math.random() * 100}%`;
+
+  leaf.style.top = "-40px";
+
+  leaf.style.fontSize =
+    `${14 + Math.random() * 14}px`;
+
+  leaf.style.animationDuration =
+    `${7 + Math.random() * 8}s`;
+}
+
+
+function startAutumnRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("autumn-room");
+
+  for (let i = 15; i < 25; i++) {
+    createAutumnLeaf();
+  }
+
+  specialEffectInterval =
+    setInterval(createAutumnLeaf, 700);
+}
+
+
+/* =========================================================
+   WINTER
+   Snowflakes
+========================================================= */
+
+function createSnowflake() {
+  const snow =
+    createRoomParticle(
+      "winter-snowflake",
+      Math.random() > 0.5 ? "❄" : "•"
+    );
+
+  snow.style.left =
+    `${Math.random() * 100}%`;
+
+  snow.style.top = "-20px";
+
+  snow.style.fontSize =
+    `${7 + Math.random() * 13}px`;
+
+  snow.style.animationDuration =
+    `${7 + Math.random() * 8}s`;
+}
+
+
+function startWinterRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("winter-room");
+
+  for (let i = 0; i < 30; i++) {
+    createSnowflake();
+  }
+
+  specialEffectInterval =
+    setInterval(createSnowflake, 350);
+}
+
+
+/* =========================================================
+   COSMOS
+========================================================= */
+
+function createCosmosParticle() {
+  const particle =
+    createRoomParticle(
+      "cosmos-particle",
+      "✦"
+    );
+
+  particle.style.fontSize =
+    `${3 + Math.random() * 7}px`;
+}
+
+
+function startCosmosRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("cosmos-room");
+
+  for (let i = 0; i < 70; i++) {
+    createCosmosParticle();
+  }
+
+  specialEffectInterval =
+    setInterval(createCosmosParticle, 900);
+}
+
+
+/* =========================================================
+   RAIN
+========================================================= */
+
+function createRainDrop() {
+  const drop =
+    createRoomParticle("rain-drop");
+
+  drop.style.left =
+    `${Math.random() * 100}%`;
+
+  drop.style.top = "-30px";
+
+  drop.style.animationDuration =
+    `${0.6 + Math.random() * 0.8}s`;
+}
+
+
+function startRainRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("rain-room");
+
+  for (let i = 0; i < 60; i++) {
+    createRainDrop();
+  }
+
+  specialEffectInterval =
+    setInterval(createRainDrop, 80);
+}
+
+
+/* =========================================================
+   MIST
+========================================================= */
+
+function createMistLayer() {
+  const mist =
+    createRoomParticle("mist-layer");
+
+  mist.style.top =
+    `${20 + Math.random() * 60}%`;
+
+  mist.style.width =
+    `${35 + Math.random() * 45}%`;
+
+  mist.style.height =
+    `${40 + Math.random() * 70}px`;
+}
+
+
+function startMistRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("mist-room");
+
+  for (let i = 0; i < 8; i++) {
+    createMistLayer();
+  }
+
+  specialEffectInterval =
+    setInterval(createMistLayer, 3000);
+}
+
+
+/* =========================================================
+   SUNSET
+========================================================= */
+
+function createSunsetParticle() {
+  const particle =
+    createRoomParticle(
+      "sunset-particle",
+      "•"
+    );
+
+  particle.style.left =
+    `${Math.random() * 100}%`;
+
+  particle.style.top =
+    `${30 + Math.random() * 65}%`;
+}
+
+
+function startSunsetRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("sunset-room");
+
+  for (let i = 25; i < 40; i++) {
+    createSunsetParticle();
+  }
+
+  specialEffectInterval =
+    setInterval(createSunsetParticle, 800);
+}
+
+
+/* =========================================================
+   FOREST
+========================================================= */
+
+function createForestParticle() {
+  const particle =
+    createRoomParticle(
+      "forest-particle",
+      Math.random() > 0.5 ? "•" : "❧"
+    );
+
+  particle.style.left =
+    `${Math.random() * 100}%`;
+
+  particle.style.top =
+    `${Math.random() * 100}%`;
+}
+
+
+function startForestRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("forest-room");
+
+  for (let i = 30; i < 45; i++) {
+    createForestParticle();
+  }
+
+  specialEffectInterval =
+    setInterval(createForestParticle, 900);
+}
+
+
+/* =========================================================
+   EMBER
+========================================================= */
+
+function createEmber() {
+  const ember =
+    createRoomParticle("ember-particle");
+
+  ember.style.left =
+    `${Math.random() * 100}%`;
+
+  ember.style.top =
+    `${85 + Math.random() * 15}%`;
+
+  const size =
+    2 + Math.random() * 5;
+
+  ember.style.width =
+    `${size}px`;
+
+  ember.style.height =
+    `${size}px`;
+
+  ember.style.animationDuration =
+    `${4 + Math.random() * 6}s`;
+}
+
+
+function startEmberRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("ember-room");
+
+  for (let i = 25; i < 35; i++) {
+    createEmber();
+  }
+
+  specialEffectInterval =
+    setInterval(createEmber, 350);
+}
+
+
+/* =========================================================
+   CANDLE
+========================================================= */
+
+function createCandleParticle() {
+  const particle =
+    createRoomParticle(
+      "candle-particle",
+      "•"
+    );
+
+  particle.style.left =
+    `${Math.random() * 100}%`;
+
+  particle.style.top =
+    `${Math.random() * 100}%`;
+}
+
+
+function startCandleRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("candle-room");
+
+  for (let i = 30; i < 45; i++) {
+    createCandleParticle();
+  }
+
+  specialEffectInterval =
+    setInterval(createCandleParticle, 900);
+}
+
+
+/* =========================================================
+   AURORA
+========================================================= */
+
+function startAuroraRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("aurora-room");
+}
+
+
+/* =========================================================
+   FEATHER
+========================================================= */
+
+function createFeather() {
+  const feather =
+    createRoomParticle(
+      "feather-particle",
+      "🪶"
+    );
+
+  feather.style.left =
+    `${Math.random() * 100}%`;
+
+  feather.style.top = "-50px";
+
+  feather.style.fontSize =
+    `${15 + Math.random() * 14}px`;
+
+  feather.style.animationDuration =
+    `${8 + Math.random() * 8}s`;
+}
+
+
+function startFeatherRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("feather-room");
+
+  for (let i = 10; i < 18; i++) {
+    createFeather();
+  }
+
+  specialEffectInterval =
+    setInterval(createFeather, 1100);
+}
+
+
+/* =========================================================
+   STARDUST
+========================================================= */
+
+function createStardust() {
+  const dust =
+    createRoomParticle(
+      "stardust-particle",
+      "✦"
+    );
+
+  dust.style.left =
+    `${Math.random() * 100}%`;
+
+  dust.style.top =
+    `${Math.random() * 100}%`;
+
+  dust.style.fontSize =
+    `${3 + Math.random() * 8}px`;
+}
+
+
+function startStardustRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("stardust-room");
+
+  for (let i = 50; i < 70; i++) {
+    createStardust();
+  }
+
+  specialEffectInterval =
+    setInterval(createStardust, 700);
+}
+
+
+/* =========================================================
+   BUTTERFLY
+========================================================= */
+
+function createButterfly() {
+  const butterfly =
+    createRoomParticle(
+      "butterfly-particle",
+      "🦋"
+    );
+
+  butterfly.style.left =
+    `${Math.random() * 100}%`;
+
+  butterfly.style.top =
+    `${20 + Math.random() * 70}%`;
+
+  butterfly.style.fontSize =
+    `${14 + Math.random() * 12}px`;
+
+  butterfly.style.animationDuration =
+    `${8 + Math.random() * 8}s`;
+}
+
+
+function startButterflyRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("butterfly-room");
+
+  for (let i = 8; i < 14; i++) {
+    createButterfly();
+  }
+
+  specialEffectInterval =
+    setInterval(createButterfly, 1500);
+}
+
+
+/* =========================================================
+   MEADOW
+========================================================= */
+
+function createMeadowParticle() {
+  const particle =
+    createRoomParticle(
+      "meadow-particle",
+      Math.random() > 0.5 ? "✿" : "•"
+    );
+
+  particle.style.left =
+    `${Math.random() * 100}%`;
+
+  particle.style.top =
+    `${55 + Math.random() * 35}%`;
+}
+
+
+function startMeadowRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("meadow-room");
+
+  for (let i = 25; i < 40; i++) {
+    createMeadowParticle();
+  }
+
+  specialEffectInterval =
+    setInterval(createMeadowParticle, 700);
+}
+
+
+/* =========================================================
+   SOLITUDE
+========================================================= */
+
+function startSolitudeRoom() {
+  clearSpecialRoomEffects();
+
+  document.body.classList.add("solitude-room");
+}
+
+
+/* =========================================================
+   RANDOM COLOUR ROOM
+========================================================= */
 
 function isColorRoom(roomCode) {
   const colorName =
@@ -284,25 +907,19 @@ function isColorRoom(roomCode) {
 }
 
 
-/*
- * Creates a colour atmosphere.
- */
-
 function createColorParticle() {
-  const container =
-    createSpecialEffectsContainer();
-
   const particle =
-    document.createElement("span");
-
-  particle.className =
-    "color-particle";
+    createRoomParticle(
+      "color-particle"
+    );
 
   particle.style.left =
     `${Math.random() * 100}%`;
 
   particle.style.bottom =
     `${-10 - Math.random() * 15}%`;
+
+  particle.style.top = "auto";
 
   const size =
     Math.random() * 5 + 2;
@@ -318,23 +935,8 @@ function createColorParticle() {
 
   particle.style.animationDelay =
     `${Math.random() * 3}s`;
-
-  container.appendChild(
-    particle
-  );
-
-  setTimeout(() => {
-    particle.remove();
-  }, 18000);
 }
 
-
-/*
- * Injects the visual styling dynamically.
- *
- * This means you don't have to manually create
- * CSS for every colour in existence.
- */
 
 function createColorRoomStyle() {
 
@@ -361,6 +963,7 @@ function createColorRoomStyle() {
           transparent 55%
         ),
         #000000;
+
       transition:
         background 1.2s ease,
         color 1.2s ease;
@@ -399,34 +1002,6 @@ function createColorRoomStyle() {
         background 1.2s ease,
         border-color 1.2s ease,
         box-shadow 1.2s ease;
-    }
-
-    body.color-room .header {
-      border-bottom-color:
-        color-mix(
-          in srgb,
-          var(--room-color) 20%,
-          #111b25
-        );
-    }
-
-    body.color-room .header h1 {
-      color:
-        color-mix(
-          in srgb,
-          var(--room-color) 45%,
-          #ffffff
-        );
-    }
-
-    body.color-room .tagline,
-    body.color-room #status {
-      color:
-        color-mix(
-          in srgb,
-          var(--room-color) 35%,
-          #718292
-        );
     }
 
     body.color-room .message {
@@ -470,36 +1045,6 @@ function createColorRoomStyle() {
         );
     }
 
-    body.color-room .message-action,
-    body.color-room .reaction,
-    body.color-room .reaction-bar,
-    body.color-room .message-actions {
-      border-color:
-        color-mix(
-          in srgb,
-          var(--room-color) 28%,
-          #172b3d
-        );
-    }
-
-    body.color-room .reaction {
-      background:
-        color-mix(
-          in srgb,
-          var(--room-color) 12%,
-          #0b1a29
-        );
-    }
-
-    body.color-room .composer {
-      border-top-color:
-        color-mix(
-          in srgb,
-          var(--room-color) 18%,
-          #101923
-        );
-    }
-
     body.color-room .composer input,
     body.color-room input {
       border-color:
@@ -537,12 +1082,7 @@ function createColorRoomStyle() {
 
       0% {
         transform:
-          translate3d(
-            0,
-            0,
-            0
-          );
-
+          translate3d(0, 0, 0);
         opacity: 0;
       }
 
@@ -553,8 +1093,7 @@ function createColorRoomStyle() {
       50% {
         transform:
           translate3d(
-            ${Math.random() > 0.5 ? "-" : ""}
-            35px,
+            var(--random-x),
             -50vh,
             0
           );
@@ -569,8 +1108,7 @@ function createColorRoomStyle() {
       100% {
         transform:
           translate3d(
-            ${Math.random() > 0.5 ? "-" : ""}
-            70px,
+            calc(var(--random-x) * 1.8),
             -105vh,
             0
           );
@@ -585,10 +1123,6 @@ function createColorRoomStyle() {
   );
 }
 
-
-/*
- * Start a colour room.
- */
 
 function startColorRoom(colorName) {
 
@@ -610,27 +1144,15 @@ function startColorRoom(colorName) {
 
   createColorRoomStyle();
 
-  const container =
-    createSpecialEffectsContainer();
-
-  /*
-   * Give the room an immediate atmosphere.
-   */
-
   for (let i = 0; i < 20; i++) {
     createColorParticle();
   }
 
-  /*
-   * Continue creating particles.
-   */
-
   specialEffectInterval =
-    setInterval(() => {
-
-      createColorParticle();
-
-    }, 650);
+    setInterval(
+      createColorParticle,
+      650
+    );
 }
 
 
@@ -648,37 +1170,69 @@ function applyRoomTheme(roomCode) {
       .toLowerCase();
 
 
-  /*
-   * NIGHT
-   */
+  const roomEffects = {
 
-  if (normalizedRoom === "night") {
-    startNightRoom();
+    night: startNightRoom,
+
+    love: startLoveRoom,
+
+    dream: startDreamRoom,
+
+    ocean: startOceanRoom,
+
+    spring: startSpringRoom,
+
+    autumn: startAutumnRoom,
+
+    winter: startWinterRoom,
+
+    cosmos: startCosmosRoom,
+
+    rain: startRainRoom,
+
+    mist: startMistRoom,
+
+    sunset: startSunsetRoom,
+
+    forest: startForestRoom,
+
+    ember: startEmberRoom,
+
+    candle: startCandleRoom,
+
+    aurora: startAuroraRoom,
+
+    feather: startFeatherRoom,
+
+    stardust: startStardustRoom,
+
+    butterfly: startButterflyRoom,
+
+    meadow: startMeadowRoom,
+
+    solitude: startSolitudeRoom
+
+  };
+
+
+  if (roomEffects[normalizedRoom]) {
+    roomEffects[normalizedRoom]();
     return;
   }
 
 
   /*
-   * LOVE
-   */
-
-  if (normalizedRoom === "love") {
-    startLoveRoom();
-    return;
-  }
-
-
-  /*
-   * ANY VALID COLOUR NAME
+   * Any valid CSS colour name
+   * still works exactly as before.
    */
 
   if (isColorRoom(normalizedRoom)) {
-    startColorRoom(
-      normalizedRoom
-    );
+    startColorRoom(normalizedRoom);
     return;
   }
 }
+
+
 function formatTime(timestamp) {
   if (!timestamp) return "";
 
