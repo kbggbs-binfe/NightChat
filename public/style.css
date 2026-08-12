@@ -177,6 +177,7 @@ button:disabled {
 }
 
 .message {
+  position: relative;
   width: fit-content;
   max-width: 78%;
   margin: 0 0 10px;
@@ -241,7 +242,8 @@ button:disabled {
 
 .composer {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px;
   padding: 9px 12px;
   border-top: 1px solid #101923;
@@ -267,30 +269,94 @@ button:disabled {
   background: #c9e8ff;
   color: #071018;
   font-size: 18px;
+  align-self: flex-end;
 }
 
-.reaction-bar {
+/* Message action menu */
+
+.message-actions {
+  display: none;
+  position: absolute;
+  left: 8px;
+  bottom: -40px;
+  z-index: 20;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: #050a10;
+  border: 1px solid #172b3d;
+  border-radius: 9px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+.message.self .message-actions {
+  left: auto;
+  right: 8px;
+}
+
+.message.actions-open .message-actions {
   display: flex;
-  gap: 3px;
-  margin-top: 6px;
-  opacity: 0.75;
 }
 
-.reaction-button {
-  width: 28px;
-  height: 25px;
-  padding: 0;
+.message-action {
+  height: 28px;
+  padding: 0 10px;
   border: 1px solid #172b3d;
   border-radius: 7px;
   background: #06111c;
   color: #c9e8ff;
-  font-size: 13px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.message-action:hover {
+  background: #0b1a29;
+}
+
+/* Reaction selector */
+
+.reaction-bar {
+  display: none;
+  position: absolute;
+  left: 8px;
+  bottom: -40px;
+  z-index: 20;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  background: #050a10;
+  border: 1px solid #172b3d;
+  border-radius: 9px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+.message.self .reaction-bar {
+  left: auto;
+  right: 8px;
+}
+
+.message.reactions-open .reaction-bar {
+  display: flex;
+}
+
+.reaction-button {
+  width: 28px;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #eaf4ff;
+  font-size: 14px;
   cursor: pointer;
 }
 
 .reaction-button:hover {
   background: #0b1a29;
 }
+
+/* Existing reactions */
 
 .reactions {
   display: flex;
@@ -311,12 +377,13 @@ button:disabled {
   cursor: pointer;
 }
 
-/* Reply preview above the message composer */
+/* Reply preview above composer */
 
 .reply-preview {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
   padding: 7px 10px;
   border-left: 2px solid #8fc9ed;
   background: #06111c;
@@ -402,5 +469,10 @@ button:disabled {
 
   .online-users {
     max-width: 180px;
+  }
+
+  .message-actions,
+  .reaction-bar {
+    bottom: -39px;
   }
 }
