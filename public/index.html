@@ -8,24 +8,50 @@
 </head>
 <body>
   <main class="app">
+
     <header class="header">
-        <div>
-  <h1>Bovarea</h1>
-  <p class="tagline">Where quiet conversations begin...</p>
-  <p id="status">Connecting...</p>
+      <div>
+        <h1>Bovarea</h1>
+        <p class="tagline">Where quiet conversations begin...</p>
+        <p id="status">Connecting...</p>
       </div>
-      <div class="online-dot" id="onlineDot"></div>
+
+      <div class="header-right">
+        <button
+          id="changeNameButton"
+          class="change-name-button"
+          type="button"
+          title="Change username"
+        >
+          Change name
+        </button>
+
+        <div class="online-dot" id="onlineDot"></div>
+      </div>
     </header>
 
     <section class="name-panel" id="namePanel">
       <label for="nameInput">Choose a username</label>
+
       <div class="name-row">
-        <input id="nameInput" maxlength="24" placeholder="Your name">
-        <button id="joinButton">Join</button>
+        <input
+          id="nameInput"
+          maxlength="24"
+          placeholder="Your name"
+          autocomplete="off"
+        >
+
+        <button id="joinButton" type="button">
+          Join
+        </button>
       </div>
     </section>
 
-    <section class="chat-window" id="chat-window" aria-live="polite"></section>
+    <section
+      class="chat-window"
+      id="chat-window"
+      aria-live="polite"
+    ></section>
 
     <form class="composer" id="chatForm">
       <input
@@ -35,8 +61,17 @@
         placeholder="Type a message..."
         disabled
       >
-      <button id="send-button" type="submit" disabled aria-label="Send message">➤</button>
+
+      <button
+        id="send-button"
+        type="submit"
+        disabled
+        aria-label="Send message"
+      >
+        ➤
+      </button>
     </form>
+
   </main>
 
   <script src="app.js"></script>
