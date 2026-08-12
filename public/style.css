@@ -12,13 +12,493 @@ body {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  background: #000000;
-  color: #eaf4ff;
+  background:
+    radial-gradient(circle at top, #193f46 0%, transparent 42%),
+    #071316;
+  color: #e9f3f3;
+}
+
+.app {
+  width: min(720px, 94vw);
+  height: min(760px, 92vh);
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
   overflow: hidden;
+  background: rgba(9, 24, 27, 0.96);
+  border: 1px solid rgba(135, 201, 205, 0.18);
+  border-radius: 24px;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px;
+  border-bottom: 1px solid rgba(135, 201, 205, 0.12);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+}
+
+.header p {
+  margin: 5px 0 0;
+  color: #8fa9ac;
+  font-size: 13px;
+}
+
+.online-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #657174;
+  box-shadow: 0 0 12px rgba(100, 130, 130, 0.4);
+}
+
+.online-dot.connected {
+  background: #65d18b;
+  box-shadow: 0 0 14px rgba(101, 209, 139, 0.65);
+}
+
+.name-panel {
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(135, 201, 205, 0.12);
+}
+
+.name-panel label {
+  display: block;
+  margin-bottom: 8px;
+  color: #9db5b7;
+  font-size: 13px;
+}
+
+.name-row {
+  display: flex;
+  gap: 10px;
+}
+
+input,
+button {
+  font: inherit;
+}
+
+input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid rgba(135, 201, 205, 0.18);
+  border-radius: 12px;
+  outline: none;
+  background: #0d2023;
+  color: #eefafa;
+  padding: 12px 14px;
+}
+
+input:focus {
+  border-color: #69aeb2;
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  padding: 0 18px;
+  background: #8bc4c7;
+  color: #061113;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.chat-window {
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.message {
+  position: relative;
+  width: fit-content;
+  max-width: 82%;
+  margin: 0 0 12px;
+  padding: 11px 14px;
+  border-radius: 15px;
+  background: #112a2e;
+  border: 1px solid rgba(135, 201, 205, 0.08);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.message.self {
+  margin-left: auto;
+  background: #23575b;
+}
+
+.sender {
+  margin-bottom: 3px;
+  color: #9bc9cb;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.text {
+  font-size: 14px;
+}
+
+.message-time {
+  margin-top: 4px;
+  text-align: right;
+  color: #60777a;
+  font-size: 9px;
+}
+
+.system {
+  margin: 10px auto;
+  text-align: center;
+  color: #718c8f;
+  font-size: 12px;
+}
+
+.history-divider {
+  margin: 16px auto 12px;
+  text-align: center;
+  color: #718c8f;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+
+.history-divider::before,
+.history-divider::after {
+  content: "";
+  display: inline-block;
+  width: 35px;
+  height: 1px;
+  margin: 0 8px 3px;
+  background: rgba(135, 201, 205, 0.14);
+}
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid rgba(135, 201, 205, 0.12);
+}
+
+.composer input {
+  width: 100%;
+  height: 38px;
+}
+
+.composer button {
+  width: 40px;
+  height: 38px;
+  padding: 0;
+  align-self: flex-end;
+  display: grid;
+  place-items: center;
 }
 
 /* =========================================================
-   SPECIAL ROOM EFFECTS
+   ONLINE USERS
+========================================================= */
+
+.header-right {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.change-name-button {
+  height: 25px;
+  padding: 0 9px;
+  border: 1px solid #18383b;
+  border-radius: 7px;
+  background: #071517;
+  color: #8fa9ac;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.change-name-button:hover {
+  color: #d7f4f5;
+  border-color: #32666a;
+}
+
+.online-panel {
+  position: relative;
+  margin-left: 5px;
+  text-align: right;
+  color: #9bc9cb;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.online-count {
+  color: #c9eeee;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.online-users {
+  position: absolute;
+  right: 0;
+  top: 22px;
+  min-width: 140px;
+  max-width: 220px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  background: #071315;
+  border: 1px solid #18383b;
+  border-radius: 9px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  text-align: left;
+  z-index: 30;
+}
+
+.online-user {
+  padding: 3px 0;
+  color: #a9c5c8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================================
+   NAME CHANGE
+========================================================= */
+
+.name-change-panel {
+  display: none;
+  padding: 14px 24px;
+  border-bottom: 1px solid rgba(135, 201, 205, 0.12);
+  background: #09181b;
+}
+
+.name-change-title {
+  margin-bottom: 7px;
+  color: #9bc9cb;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.name-change-panel input {
+  width: 100%;
+  height: 34px;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+.name-change-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.name-cancel-button,
+.name-save-button {
+  height: 29px;
+  padding: 0 11px;
+  border-radius: 7px;
+  font-size: 10px;
+}
+
+.name-cancel-button {
+  border: 1px solid #18383b;
+  background: #071517;
+  color: #8fa9ac;
+}
+
+.name-save-button {
+  background: #8bc4c7;
+  color: #061113;
+}
+
+/* =========================================================
+   MESSAGE ACTIONS
+========================================================= */
+
+.message-actions {
+  display: none;
+  position: absolute;
+  left: 8px;
+  bottom: -40px;
+  z-index: 20;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: #071315;
+  border: 1px solid #18383b;
+  border-radius: 9px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+.message.self .message-actions {
+  left: auto;
+  right: 8px;
+}
+
+.message.actions-open .message-actions {
+  display: flex;
+}
+
+.message-action {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #18383b;
+  border-radius: 7px;
+  background: #0b2023;
+  color: #c9eeee;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.message-action:hover {
+  background: #123236;
+}
+
+/* =========================================================
+   REACTIONS
+========================================================= */
+
+.reaction-bar {
+  display: none;
+  position: absolute;
+  left: 8px;
+  bottom: -40px;
+  z-index: 20;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  background: #071315;
+  border: 1px solid #18383b;
+  border-radius: 9px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+.message.self .reaction-bar {
+  left: auto;
+  right: 8px;
+}
+
+.message.reactions-open .reaction-bar {
+  display: flex;
+}
+
+.reaction-button {
+  width: 28px;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #eaf4ff;
+  font-size: 14px;
+}
+
+.reaction-button:hover {
+  background: #123236;
+}
+
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.reaction {
+  width: auto;
+  height: 23px;
+  padding: 0 7px;
+  border: 1px solid #28565a;
+  border-radius: 10px;
+  background: #0b2023;
+  color: #c9eeee;
+  font-size: 11px;
+}
+
+/* =========================================================
+   REPLY
+========================================================= */
+
+.reply-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border-left: 2px solid #72b9bd;
+  background: #0b2023;
+  border-radius: 7px;
+}
+
+.reply-preview-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.reply-preview-title {
+  color: #9bc9cb;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.reply-preview-message {
+  margin-top: 2px;
+  color: #718c8f;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reply-cancel {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  color: #718c8f;
+  font-size: 18px;
+}
+
+.message-reply {
+  margin-bottom: 7px;
+  padding: 5px 8px;
+  border-left: 2px solid #547b7e;
+  background: #0a1c1f;
+  border-radius: 5px;
+}
+
+.message-reply-sender {
+  color: #9bc9cb;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.message-reply-text {
+  margin-top: 2px;
+  color: #718c8f;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================================
+   SPECIAL EFFECT LAYER
 ========================================================= */
 
 #special-effects {
@@ -32,23 +512,36 @@ body {
 }
 
 body.night-room #special-effects,
-body.love-room #special-effects {
+body.love-room #special-effects,
+body.dream-room #special-effects,
+body.ocean-room #special-effects,
+body.spring-room #special-effects,
+body.autumn-room #special-effects,
+body.winter-room #special-effects,
+body.cosmos-room #special-effects,
+body.rain-room #special-effects,
+body.mist-room #special-effects,
+body.sunset-room #special-effects,
+body.forest-room #special-effects,
+body.ember-room #special-effects,
+body.candle-room #special-effects,
+body.aurora-room #special-effects,
+body.feather-room #special-effects,
+body.stardust-room #special-effects,
+body.butterfly-room #special-effects,
+body.meadow-room #special-effects,
+body.solitude-room #special-effects,
+body.color-room #special-effects {
   opacity: 1;
 }
 
-/* ---------------------------------------------------------
-   NIGHT ROOM
---------------------------------------------------------- */
+/* =========================================================
+   NIGHT
+========================================================= */
 
 body.night-room {
   background:
-    radial-gradient(
-      circle at 50% 20%,
-      #101d38 0%,
-      #070e1d 35%,
-      #02050c 75%,
-      #000000 100%
-    );
+    radial-gradient(circle at 50% 20%, #101d38 0%, #070e1d 35%, #02050c 75%, #000000 100%);
 }
 
 body.night-room .app {
@@ -75,8 +568,6 @@ body.night-room .message.self {
   background: rgba(9, 25, 45, 0.82);
   border-color: #214466;
 }
-
-/* Individual stars created by JavaScript */
 
 .night-star {
   position: absolute;
@@ -119,19 +610,13 @@ body.night-room .message.self {
   }
 }
 
-/* ---------------------------------------------------------
-   LOVE ROOM
---------------------------------------------------------- */
+/* =========================================================
+   LOVE
+========================================================= */
 
 body.love-room {
   background:
-    radial-gradient(
-      circle at 50% 20%,
-      #5a102d 0%,
-      #260916 35%,
-      #090207 70%,
-      #000000 100%
-    );
+    radial-gradient(circle at 50% 20%, #5a102d 0%, #260916 35%, #090207 70%, #000000 100%);
 }
 
 body.love-room .app {
@@ -167,8 +652,6 @@ body.love-room .tagline {
   color: #b77a91;
 }
 
-/* Floating hearts created by JavaScript */
-
 .love-heart {
   position: absolute;
   display: block;
@@ -178,8 +661,7 @@ body.love-room .tagline {
   text-shadow:
     0 0 6px rgba(255, 55, 120, 0.7),
     0 0 18px rgba(255, 30, 100, 0.35);
-  animation:
-    heart-float linear forwards;
+  animation: heart-float linear forwards;
   user-select: none;
 }
 
@@ -217,534 +699,808 @@ body.love-room .tagline {
   }
 }
 
-
 /* =========================================================
-   MAIN APPLICATION
+   OTHER ROOM BACKGROUNDS
 ========================================================= */
 
-.app {
-  position: relative;
-  z-index: 10;
-  width: min(720px, 94vw);
-  height: min(800px, 96vh);
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
-  overflow: hidden;
-  background: #03070c;
-  border: 1px solid #172331;
-  border-radius: 20px;
+body.dream-room {
+  background: radial-gradient(circle at 50% 18%, #23334c 0%, #111a2b 42%, #050811 100%);
+}
+
+body.ocean-room {
+  background: radial-gradient(circle at 50% 100%, #063d5b 0%, #05233b 42%, #01070d 100%);
+}
+
+body.spring-room {
+  background: radial-gradient(circle at 50% 20%, #253b2b 0%, #142318 45%, #050805 100%);
+}
+
+body.autumn-room {
+  background: radial-gradient(circle at 50% 20%, #4a2a17 0%, #21130c 45%, #050302 100%);
+}
+
+body.winter-room {
+  background: radial-gradient(circle at 50% 10%, #34485c 0%, #182534 45%, #05080d 100%);
+}
+
+body.cosmos-room,
+body.stardust-room {
+  background: radial-gradient(circle at 50% 30%, #17103d 0%, #08051b 45%, #010107 100%);
+}
+
+body.rain-room {
+  background: radial-gradient(circle at 50% 20%, #172d3d 0%, #09151f 45%, #020508 100%);
+}
+
+body.mist-room {
+  background: radial-gradient(circle at 50% 45%, #303a40 0%, #141b20 48%, #040608 100%);
+}
+
+body.sunset-room {
+  background: radial-gradient(circle at 50% 5%, #71351e 0%, #35151a 42%, #09050a 100%);
+}
+
+body.forest-room,
+body.meadow-room {
+  background: radial-gradient(circle at 50% 20%, #1b3a25 0%, #0b2113 45%, #020603 100%);
+}
+
+body.ember-room,
+body.candle-room {
+  background: radial-gradient(circle at 50% 65%, #55200d 0%, #230b06 42%, #050201 100%);
+}
+
+body.aurora-room {
+  background:
+    radial-gradient(ellipse at 25% 30%, rgba(39, 175, 155, .22), transparent 42%),
+    radial-gradient(ellipse at 75% 25%, rgba(102, 68, 210, .22), transparent 44%),
+    #03050b;
+}
+
+body.feather-room {
+  background: radial-gradient(circle at 50% 15%, #2b3440 0%, #151b22 45%, #040507 100%);
+}
+
+body.butterfly-room {
+  background: radial-gradient(circle at 50% 15%, #26364c 0%, #14212e 45%, #040709 100%);
+}
+
+body.solitude-room {
+  background: radial-gradient(circle at 50% 50%, #11151a 0%, #080a0d 50%, #000000 100%);
+}
+
+/* =========================================================
+   ROOM APP GLOWS
+========================================================= */
+
+body.dream-room .app {
+  box-shadow: 0 20px 80px rgba(80,140,210,.10), 0 0 60px rgba(120,160,220,.08);
+}
+
+body.ocean-room .app {
+  box-shadow: 0 20px 80px rgba(0,150,210,.12), 0 0 60px rgba(0,190,240,.08);
+}
+
+body.spring-room .app {
+  box-shadow: 0 20px 80px rgba(100,190,110,.10), 0 0 60px rgba(130,220,120,.07);
+}
+
+body.autumn-room .app {
+  box-shadow: 0 20px 80px rgba(210,100,30,.12), 0 0 60px rgba(220,130,40,.08);
+}
+
+body.winter-room .app {
+  box-shadow: 0 20px 80px rgba(150,205,245,.12), 0 0 60px rgba(190,225,255,.08);
+}
+
+body.cosmos-room .app,
+body.stardust-room .app {
+  box-shadow: 0 20px 80px rgba(110,80,220,.14), 0 0 70px rgba(150,100,255,.08);
+}
+
+body.rain-room .app {
+  box-shadow: 0 20px 80px rgba(70,140,180,.12), 0 0 60px rgba(100,170,210,.08);
+}
+
+body.mist-room .app {
+  box-shadow: 0 20px 80px rgba(180,195,200,.08), 0 0 60px rgba(200,210,215,.05);
+}
+
+body.sunset-room .app {
+  box-shadow: 0 20px 80px rgba(240,100,45,.14), 0 0 60px rgba(255,150,70,.08);
+}
+
+body.forest-room .app,
+body.meadow-room .app {
+  box-shadow: 0 20px 80px rgba(70,180,90,.12), 0 0 60px rgba(100,220,120,.07);
+}
+
+body.ember-room .app,
+body.candle-room .app {
+  box-shadow: 0 20px 80px rgba(255,90,20,.14), 0 0 60px rgba(255,130,40,.08);
+}
+
+body.aurora-room .app {
+  box-shadow: 0 20px 80px rgba(70,180,180,.14), 0 0 70px rgba(100,100,230,.08);
+}
+
+body.feather-room .app {
+  box-shadow: 0 20px 80px rgba(190,205,220,.08), 0 0 60px rgba(210,220,230,.05);
+}
+
+body.butterfly-room .app {
+  box-shadow: 0 20px 80px rgba(100,140,220,.12), 0 0 60px rgba(160,110,230,.07);
+}
+
+body.solitude-room .app {
+  box-shadow: 0 20px 80px rgba(120,130,140,.05), 0 0 50px rgba(160,170,180,.03);
+}
+
+/* =========================================================
+   GENERIC PARTICLES
+========================================================= */
+
+.dream-cloud,
+.ocean-bubble,
+.spring-petal,
+.autumn-leaf,
+.winter-snowflake,
+.cosmos-particle,
+.rain-drop,
+.mist-layer,
+.sunset-particle,
+.forest-particle,
+.ember-particle,
+.candle-particle,
+.feather-particle,
+.stardust-particle,
+.butterfly-particle,
+.meadow-particle {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* =========================================================
+   DREAM
+========================================================= */
+
+.dream-cloud {
+  color: rgba(235,245,255,.9);
+  filter: blur(.2px);
+  text-shadow: 0 0 22px rgba(220,240,255,.22);
+  animation: dream-drift linear infinite;
+}
+
+@keyframes dream-drift {
+  0% {
+    transform: translate3d(-30vw, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(20vw, -15px, 0);
+  }
+
+  100% {
+    transform: translate3d(110vw, 8px, 0);
+  }
+}
+
+/* =========================================================
+   OCEAN
+========================================================= */
+
+.ocean-bubble {
+  border: 1px solid rgba(180,235,255,.55);
+  border-radius: 50%;
+  background: rgba(120,210,245,.07);
+  box-shadow:
+    inset 0 0 7px rgba(200,245,255,.22),
+    0 0 10px rgba(70,190,240,.12);
+  animation: ocean-rise linear forwards;
+}
+
+@keyframes ocean-rise {
+  0% {
+    transform: translate3d(0, 20vh, 0) scale(.8);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: .55;
+  }
+
+  50% {
+    transform: translate3d(25px, -40vh, 0) scale(1);
+    opacity: .42;
+  }
+
+  100% {
+    transform: translate3d(-20px, -120vh, 0) scale(1.15);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   SPRING
+========================================================= */
+
+.spring-petal {
+  color: #f2b9d0;
+  text-shadow: 0 0 10px rgba(255,180,210,.4);
+  animation: petal-fall linear forwards;
+}
+
+@keyframes petal-fall {
+  0% {
+    transform: translate3d(0, -10px, 0) rotate(0);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: .8;
+  }
+
+  50% {
+    transform: translate3d(55px, 50vh, 0) rotate(160deg);
+  }
+
+  100% {
+    transform: translate3d(-45px, 110vh, 0) rotate(340deg);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   AUTUMN
+========================================================= */
+
+.autumn-leaf {
+  filter: drop-shadow(0 0 4px rgba(255,140,50,.15));
+  animation: leaf-fall linear forwards;
+}
+
+@keyframes leaf-fall {
+  0% {
+    transform: translate3d(0, -20px, 0) rotate(0);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: .9;
+  }
+
+  45% {
+    transform: translate3d(-55px, 48vh, 0) rotate(150deg);
+  }
+
+  75% {
+    transform: translate3d(40px, 78vh, 0) rotate(270deg);
+  }
+
+  100% {
+    transform: translate3d(-25px, 110vh, 0) rotate(390deg);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   WINTER
+========================================================= */
+
+.winter-snowflake {
+  color: rgba(235,248,255,.9);
+  text-shadow: 0 0 8px rgba(200,235,255,.65);
+  animation: snow-fall linear forwards;
+}
+
+@keyframes snow-fall {
+  0% {
+    transform: translate3d(0, -20px, 0);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: .8;
+  }
+
+  50% {
+    transform: translate3d(28px, 50vh, 0);
+  }
+
+  100% {
+    transform: translate3d(-24px, 110vh, 0);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   COSMOS / STARDUST
+========================================================= */
+
+.cosmos-particle,
+.stardust-particle {
+  color: rgba(235,220,255,.9);
+  text-shadow:
+    0 0 8px rgba(190,160,255,.8),
+    0 0 18px rgba(130,90,255,.3);
+  animation: space-drift ease-in-out infinite alternate;
+}
+
+@keyframes space-drift {
+  from {
+    transform: translate3d(-18px, 12px, 0) rotate(0);
+    opacity: .2;
+  }
+
+  to {
+    transform: translate3d(22px, -18px, 0) rotate(25deg);
+    opacity: .9;
+  }
+}
+
+/* =========================================================
+   RAIN
+========================================================= */
+
+.rain-drop {
+  width: 1px;
+  height: 35px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(170,220,255,.75)
+  );
+  box-shadow: 0 0 5px rgba(120,190,240,.18);
+  animation: rain-fall linear forwards;
+}
+
+@keyframes rain-fall {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: .65;
+  }
+
+  100% {
+    transform: translate3d(-35px, 115vh, 0);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   MIST
+========================================================= */
+
+.mist-layer {
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(220,230,235,.12),
+      rgba(220,230,235,0) 70%
+    );
+  filter: blur(10px);
+  animation: mist-drift 12s ease-in-out infinite alternate;
+}
+
+@keyframes mist-drift {
+  from {
+    transform: translateX(-18vw);
+    opacity: .25;
+  }
+
+  to {
+    transform: translateX(18vw);
+    opacity: .55;
+  }
+}
+
+/* =========================================================
+   SUNSET
+========================================================= */
+
+.sunset-particle {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  color: rgba(255,190,100,.7);
+  background: rgba(255,170,80,.55);
+  box-shadow: 0 0 9px rgba(255,120,50,.55);
+  animation: sunset-float 8s ease-in-out infinite alternate;
+}
+
+@keyframes sunset-float {
+  from {
+    transform: translate3d(-25px, 12px, 0);
+    opacity: .2;
+  }
+
+  to {
+    transform: translate3d(25px, -18px, 0);
+    opacity: .7;
+  }
+}
+
+/* =========================================================
+   FOREST / MEADOW
+========================================================= */
+
+.forest-particle,
+.meadow-particle {
+  color: rgba(160,220,150,.55);
+  text-shadow: 0 0 8px rgba(100,200,110,.3);
+  animation: forest-drift 9s ease-in-out infinite alternate;
+}
+
+@keyframes forest-drift {
+  from {
+    transform: translate3d(-25px, 18px, 0) rotate(-5deg);
+    opacity: .15;
+  }
+
+  to {
+    transform: translate3d(30px, -20px, 0) rotate(8deg);
+    opacity: .65;
+  }
+}
+
+/* =========================================================
+   EMBER / CANDLE
+========================================================= */
+
+.ember-particle,
+.candle-particle {
+  border-radius: 50%;
+  background: rgba(255,120,35,.85);
+  box-shadow:
+    0 0 7px rgba(255,120,30,.8),
+    0 0 18px rgba(255,70,15,.25);
+}
+
+.ember-particle {
+  animation: ember-rise linear forwards;
+}
+
+@keyframes ember-rise {
+  0% {
+    transform: translate3d(0, 0, 0) scale(.6);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: .9;
+  }
+
+  55% {
+    transform: translate3d(25px, -55vh, 0) scale(1);
+  }
+
+  100% {
+    transform: translate3d(-20px, -110vh, 0) scale(.4);
+    opacity: 0;
+  }
+}
+
+.candle-particle {
+  animation: candle-flicker 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes candle-flicker {
+  from {
+    transform: translate3d(-4px, 3px, 0) scale(.75);
+    opacity: .18;
+  }
+
+  to {
+    transform: translate3d(5px, -4px, 0) scale(1.25);
+    opacity: .72;
+  }
+}
+
+/* =========================================================
+   AURORA
+========================================================= */
+
+body.aurora-room {
+  background:
+    radial-gradient(
+      ellipse at 20% 30%,
+      rgba(30,210,170,.18),
+      transparent 38%
+    ),
+    radial-gradient(
+      ellipse at 75% 25%,
+      rgba(120,70,240,.18),
+      transparent 40%
+    ),
+    radial-gradient(
+      ellipse at 50% 80%,
+      rgba(30,130,220,.12),
+      transparent 45%
+    ),
+    #02040a;
+}
+
+body.aurora-room::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      110deg,
+      transparent 25%,
+      rgba(50,220,180,.08) 40%,
+      transparent 55%
+    ),
+    linear-gradient(
+      70deg,
+      transparent 35%,
+      rgba(140,80,255,.07) 48%,
+      transparent 65%
+    );
+  filter: blur(30px);
+  animation: aurora-wave 12s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+@keyframes aurora-wave {
+  from {
+    transform: translateX(-8%) rotate(-2deg);
+    opacity: .5;
+  }
+
+  to {
+    transform: translateX(8%) rotate(2deg);
+    opacity: 1;
+  }
+}
+
+/* =========================================================
+   FEATHERS
+========================================================= */
+
+.feather-particle {
+  filter: drop-shadow(0 0 5px rgba(230,240,250,.18));
+  animation: feather-fall linear forwards;
+}
+
+@keyframes feather-fall {
+  0% {
+    transform: translate3d(0, -20px, 0) rotate(-10deg);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: .7;
+  }
+
+  45% {
+    transform: translate3d(45px, 45vh, 0) rotate(80deg);
+  }
+
+  75% {
+    transform: translate3d(-35px, 78vh, 0) rotate(150deg);
+  }
+
+  100% {
+    transform: translate3d(20px, 110vh, 0) rotate(220deg);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   BUTTERFLIES
+========================================================= */
+
+.butterfly-particle {
+  filter: drop-shadow(0 0 6px rgba(150,180,255,.25));
+  animation: butterfly-fly linear forwards;
+}
+
+@keyframes butterfly-fly {
+  0% {
+    transform: translate3d(-20px, 20px, 0) rotate(-5deg);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: .85;
+  }
+
+  30% {
+    transform: translate3d(70px, -30px, 0) rotate(8deg);
+  }
+
+  60% {
+    transform: translate3d(-50px, -80px, 0) rotate(-8deg);
+  }
+
+  100% {
+    transform: translate3d(80px, -150px, 0) rotate(6deg);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   SOLITUDE
+========================================================= */
+
+body.solitude-room .header,
+body.solitude-room .composer {
+  background: rgba(3, 5, 8, .88);
+}
+
+body.solitude-room .app {
+  border-color: #12171c;
+}
+
+body.solitude-room .message {
+  background: rgba(7, 9, 12, .9);
+  border-color: #12171c;
+}
+
+/* =========================================================
+   RANDOM COLOUR ROOMS
+========================================================= */
+
+body.color-room {
+  background:
+    radial-gradient(
+      circle at 50% 15%,
+      color-mix(
+        in srgb,
+        var(--room-color) 18%,
+        transparent
+      ),
+      transparent 55%
+    ),
+    #000000;
+
+  transition:
+    background 1.2s ease,
+    color 1.2s ease;
+}
+
+body.color-room .app {
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      color-mix(
+        in srgb,
+        var(--room-color) 12%,
+        transparent
+      ),
+      transparent 55%
+    ),
+    #03070c;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--room-color) 30%,
+      #172331
+    );
+
   box-shadow:
     0 20px 80px rgba(0, 0, 0, 0.85),
-    0 0 35px rgba(140, 190, 230, 0.05);
+    0 0 50px
+    color-mix(
+      in srgb,
+      var(--room-color) 20%,
+      transparent
+    );
 }
 
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 18px 20px;
-  border-bottom: 1px solid #111b25;
+body.color-room .message {
+  background:
+    color-mix(
+      in srgb,
+      var(--room-color) 8%,
+      #0a121a
+    );
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--room-color) 18%,
+      #14222f
+    );
 }
 
-.header h1 {
-  margin: 0;
-  font-size: 23px;
-  letter-spacing: 1px;
-  color: #e8f5ff;
+body.color-room .message.self {
+  background:
+    color-mix(
+      in srgb,
+      var(--room-color) 14%,
+      #0b1a29
+    );
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--room-color) 30%,
+      #17344b
+    );
 }
 
-.header p {
-  margin: 4px 0 0;
-  color: #718292;
-  font-size: 12px;
+body.color-room .sender {
+  color:
+    color-mix(
+      in srgb,
+      var(--room-color) 50%,
+      #9bc9e7
+    );
 }
 
-.tagline {
-  margin: 3px 0 2px;
-  color: #8b9aaa;
-  font-size: 11px;
-  letter-spacing: 0.2px;
+body.color-room .composer input,
+body.color-room input {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--room-color) 22%,
+      #172b3d
+    );
 }
 
-/* Header controls */
-
-.header-right {
-  position: relative;
-  z-index: 30;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.change-name-button {
-  position: relative;
-  z-index: 31;
-  height: 24px;
-  padding: 0 8px;
-  border: 1px solid #172b3d;
-  border-radius: 7px;
-  background: #03070c;
-  color: #718292;
-  font-size: 9px;
-  font-weight: 500;
-  cursor: pointer;
-  opacity: 0.75;
-  pointer-events: auto;
-}
-
-.change-name-button:hover {
-  color: #c9e8ff;
-  border-color: #29445b;
-  background: #06111c;
-  opacity: 1;
-}
-
-.online-dot {
-  width: 9px;
-  height: 9px;
-  margin-top: 7px;
-  border-radius: 50%;
-  background: #3c454d;
-  flex-shrink: 0;
-}
-
-.online-dot.connected {
-  background: #c9e8ff;
-  box-shadow: 0 0 14px rgba(201, 232, 255, 0.75);
-}
-
-.online-panel {
-  position: relative;
-  margin-left: 18px;
-  text-align: right;
-  color: #9bc9e7;
-  font-size: 11px;
-  cursor: default;
-  flex-shrink: 0;
-}
-
-.online-count {
-  color: #c9e8ff;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.online-users {
+.color-particle {
   position: absolute;
-  right: 0;
-  top: 22px;
-  min-width: 140px;
-  max-width: 220px;
-  max-height: 220px;
-  overflow-y: auto;
-  padding: 8px 10px;
-  background: #050a10;
-  border: 1px solid #172b3d;
-  border-radius: 9px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-  text-align: left;
-  z-index: 10;
-}
-
-.online-user {
-  padding: 3px 0;
-  color: #a9bfd0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.name-panel {
-  padding: 10px 20px;
-  border-bottom: 1px solid #101923;
-}
-
-.name-panel label {
   display: block;
-  margin-bottom: 6px;
-  color: #718292;
-  font-size: 11px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: var(--room-color);
+
+  box-shadow:
+    0 0 8px
+    color-mix(
+      in srgb,
+      var(--room-color) 75%,
+      transparent
+    );
+
+  opacity: 0;
+  animation: colorParticleFloat linear forwards;
 }
 
-.name-row {
-  display: flex;
-  gap: 8px;
-}
+@keyframes colorParticleFloat {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
 
-input,
-button {
-  font: inherit;
-}
+  15% {
+    opacity: 0.55;
+  }
 
-input {
-  min-width: 0;
-  flex: 1;
-  border: 1px solid #172b3d;
-  border-radius: 9px;
-  outline: none;
-  background: #06111c;
-  color: #eaf4ff;
-  padding: 9px 11px;
-}
+  50% {
+    transform:
+      translate3d(
+        var(--random-x),
+        -50vh,
+        0
+      );
+    opacity: 0.35;
+  }
 
-input:focus {
-  border-color: #6e9cbd;
-  box-shadow: 0 0 10px rgba(150, 200, 235, 0.08);
-}
+  85% {
+    opacity: 0.15;
+  }
 
-button {
-  border: 0;
-  border-radius: 9px;
-  padding: 0 15px;
-  background: #c9e8ff;
-  color: #071018;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-button:hover:not(:disabled) {
-  filter: brightness(1.06);
-}
-
-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.chat-window {
-  overflow-y: auto;
-  padding: 20px;
-  min-height: 0;
-}
-
-.message {
-  position: relative;
-  width: fit-content;
-  max-width: 78%;
-  margin: 0 0 10px;
-  padding: 9px 12px;
-  border-radius: 13px;
-  background: #0a121a;
-  border: 1px solid #14222f;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.25);
-}
-
-.message.self {
-  margin-left: auto;
-  background: #0b1a29;
-  border-color: #17344b;
-}
-
-.sender {
-  margin-bottom: 2px;
-  color: #9bc9e7;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.text {
-  font-size: 14px;
-  color: #e8f4fc;
-}
-
-.message-time {
-  margin-top: 4px;
-  text-align: right;
-  color: #536372;
-  font-size: 9px;
-}
-
-.history-divider {
-  margin: 16px auto 12px;
-  text-align: center;
-  color: #718292;
-  font-size: 10px;
-  letter-spacing: 0.5px;
-}
-
-.history-divider::before,
-.history-divider::after {
-  content: "";
-  display: inline-block;
-  width: 35px;
-  height: 1px;
-  margin: 0 8px 3px;
-  background: #172331;
-}
-
-.system {
-  margin: 8px auto;
-  text-align: center;
-  color: #536372;
-  font-size: 11px;
-}
-
-.composer {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  padding: 9px 12px;
-  border-top: 1px solid #101923;
-  background: #020406;
-}
-
-.composer input {
-  height: 34px;
-  padding: 6px 10px;
-  border-radius: 9px;
-  background: #06111c;
-  border: 1px solid #162b3d;
-  font-size: 13px;
-}
-
-.composer button {
-  width: 38px;
-  height: 34px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  background: #c9e8ff;
-  color: #071018;
-  font-size: 18px;
-  align-self: flex-end;
-}
-
-/* =========================================================
-   CHANGE USERNAME PANEL
-========================================================= */
-
-.name-change-panel {
-  display: none;
-  padding: 14px 20px;
-  border-bottom: 1px solid #101923;
-  background: #03070c;
-}
-
-.name-change-title {
-  margin-bottom: 7px;
-  color: #9bc9e7;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.name-change-panel input {
-  width: 100%;
-  height: 34px;
-  padding: 7px 10px;
-  font-size: 13px;
-}
-
-.name-change-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 7px;
-  margin-top: 8px;
-}
-
-.name-cancel-button,
-.name-save-button {
-  height: 29px;
-  padding: 0 11px;
-  border-radius: 7px;
-  font-size: 10px;
-}
-
-.name-cancel-button {
-  border: 1px solid #172b3d;
-  background: #06111c;
-  color: #718292;
-}
-
-.name-save-button {
-  background: #c9e8ff;
-  color: #071018;
-}
-
-/* =========================================================
-   MESSAGE ACTION MENU
-========================================================= */
-
-.message-actions {
-  display: none;
-  position: absolute;
-  left: 8px;
-  bottom: -40px;
-  z-index: 20;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
-  background: #050a10;
-  border: 1px solid #172b3d;
-  border-radius: 9px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
-}
-
-.message.self .message-actions {
-  left: auto;
-  right: 8px;
-}
-
-.message.actions-open .message-actions {
-  display: flex;
-}
-
-.message-action {
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid #172b3d;
-  border-radius: 7px;
-  background: #06111c;
-  color: #c9e8ff;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.message-action:hover {
-  background: #0b1a29;
-}
-
-/* =========================================================
-   REACTION SELECTOR
-========================================================= */
-
-.reaction-bar {
-  display: none;
-  position: absolute;
-  left: 8px;
-  bottom: -40px;
-  z-index: 20;
-  align-items: center;
-  gap: 3px;
-  padding: 4px;
-  background: #050a10;
-  border: 1px solid #172b3d;
-  border-radius: 9px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
-}
-
-.message.self .reaction-bar {
-  left: auto;
-  right: 8px;
-}
-
-.message.reactions-open .reaction-bar {
-  display: flex;
-}
-
-.reaction-button {
-  width: 28px;
-  height: 27px;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: #eaf4ff;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.reaction-button:hover {
-  background: #0b1a29;
-}
-
-/* =========================================================
-   EXISTING REACTIONS
-========================================================= */
-
-.reactions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 5px;
-}
-
-.reaction {
-  width: auto;
-  height: 23px;
-  padding: 0 7px;
-  border: 1px solid #17344b;
-  border-radius: 10px;
-  background: #0b1a29;
-  color: #c9e8ff;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-/* =========================================================
-   REPLY PREVIEW
-========================================================= */
-
-.reply-preview {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 7px 10px;
-  border-left: 2px solid #8fc9ed;
-  background: #06111c;
-  border-radius: 7px;
-}
-
-.reply-preview-content {
-  min-width: 0;
-  flex: 1;
-}
-
-.reply-preview-title {
-  color: #9bc9e7;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.reply-preview-message {
-  margin-top: 2px;
-  color: #718292;
-  font-size: 11px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.reply-cancel {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  background: transparent;
-  color: #718292;
-  font-size: 18px;
-}
-
-/* =========================================================
-   REPLY SHOWN INSIDE MESSAGE
-========================================================= */
-
-.message-reply {
-  margin-bottom: 7px;
-  padding: 5px 8px;
-  border-left: 2px solid #54748c;
-  background: #06111c;
-  border-radius: 5px;
-}
-
-.message-reply-sender {
-  color: #9bc9e7;
-  font-size: 9px;
-  font-weight: 700;
-}
-
-.message-reply-text {
-  margin-top: 2px;
-  color: #718292;
-  font-size: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  100% {
+    transform:
+      translate3d(
+        calc(var(--random-x) * 1.8),
+        -105vh,
+        0
+      );
+    opacity: 0;
+  }
 }
 
 /* =========================================================
