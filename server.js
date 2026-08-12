@@ -55,6 +55,8 @@ const clients = new Map();
 const recentMessages = [];
 const HISTORY_DURATION = 60 * 1000;
 
+const allowedReactions = ["👍", "❤️", "😂", "😮", "😢", "💀"];
+
 function broadcast(payload, except = null) {
   const message = JSON.stringify(payload);
 
@@ -95,10 +97,14 @@ function addRecentMessage(sender, message, time) {
   cleanOldMessages();
 
   recentMessages.push({
+    id: `${time}-${Math.random().toString(36).slice(2, 10)}`,
     sender,
     message,
-    time
+    time: new Date(time).toISOString(),
+    reactions: {}
   });
+
+  return recentMessages[recentMessages.length - 1];
 }
 
 function sendRecentMessages(socket) {
@@ -165,23 +171,77 @@ wss.on("connection", (socket) => {
       const sender = clients.get(socket) || "Anonymous";
       const time = Date.now();
 
-      addRecentMessage(sender, message, time);
+      const chatMessage = addRecentMessage(
+        sender,
+        message,
+        time
+      );
 
       broadcast({
         type: "chat",
-        sender,
-        message,
-        time: new Date(time).toISOString()
+        id: chatMessage.id,
+        sender: chatMessage.sender,
+        message: chatMessage.message,
+        time: chatMessage.time,
+        reactions: chatMessage.reactions
       }, socket);
 
       // Echo back to the sender too.
       socket.send(JSON.stringify({
         type: "chat",
-        sender,
-        message,
-        time: new Date(time).toISOString(),
+        id: chatMessage.id,
+        sender: chatMessage.sender,
+        message: chatMessage.message,
+        time: chatMessage.time,
+        reactions: chatMessage.reactions,
         self: true
       }));
+
+      return;
+    }
+
+    if (data.type === "reaction") {
+      cleanOldMessages();
+
+      const message = recentMessages.find(
+        (item) => item.id === data.messageId
+      );
+
+      if (!message) return;
+
+      const reaction = String(data.reaction || "");
+
+      if (!allowedReactions.includes(reaction)) return;
+
+      const username = clients.get(socket);
+
+      if (!username || username === "Anonymous") return;
+
+      if (!message.reactions[reaction]) {
+        message.reactions[reaction] = [];
+      }
+
+      const users = message.reactions[reaction];
+
+      const existingIndex = users.indexOf(username);
+
+      if (existingIndex !== -1) {
+        users.splice(existingIndex, 1);
+
+        if (users.length === 0) {
+          delete message.reactions[reaction];
+        }
+      } else {
+        users.push(username);
+      }
+
+      broadcast({
+        type: "reaction",
+        messageId: message.id,
+        reactions: message.reactions
+      });
+
+      return;
     }
   });
 
