@@ -6,6 +6,7 @@ const chatForm = document.getElementById("chatForm");
 const namePanel = document.getElementById("namePanel");
 const nameInput = document.getElementById("nameInput");
 const joinButton = document.getElementById("joinButton");
+const changeNameButton = document.getElementById("changeNameButton");
 
 const status = document.getElementById("status");
 const onlineDot = document.getElementById("onlineDot");
@@ -369,9 +370,40 @@ function joinChat(name) {
   messageInput.focus();
 }
 
+function changeUsername() {
+  if (!joined) return;
+
+  const currentUsername =
+    localStorage.getItem("bovarea_username") || "";
+
+  const newUsername = window.prompt(
+    "Enter your new username:",
+    currentUsername
+  );
+
+  if (newUsername === null) return;
+
+  const username = newUsername.trim().slice(0, 24);
+
+  if (!username) {
+    window.alert("Username cannot be empty.");
+    return;
+  }
+
+  if (username === currentUsername) return;
+
+  localStorage.setItem("bovarea_username", username);
+
+  window.location.reload();
+}
+
 joinButton.addEventListener("click", () => {
   joinChat(nameInput.value);
 });
+
+if (changeNameButton) {
+  changeNameButton.addEventListener("click", changeUsername);
+}
 
 nameInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
@@ -384,7 +416,9 @@ chatForm.addEventListener("submit", (event) => {
 
   const message = messageInput.value.trim();
 
-  if (!message || !joined || socket.readyState !== WebSocket.OPEN) return;
+  if (!message || !joined || socket.readyState !== WebSocket.OPEN) {
+    return;
+  }
 
   socket.send(JSON.stringify({
     type: "chat",
