@@ -45,9 +45,6 @@ let currentRoom = null;
  * Special room effect state
  */
 
-let specialEffectsContainer = null;
-let specialEffectInterval = null;
-
 const reactionOptions = [
   "👍",
   "❤️",
