@@ -6,6 +6,13 @@ const WebSocket = require("ws");
 const PORT = process.env.PORT || 8080;
 const publicDir = path.join(__dirname, "public");
 
+const STATS_FILE = path.join(
+  __dirname,
+  "bovarea_stats.json"
+);
+
+const STATS_ROOM = "userdata_bovarea";
+
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -23,6 +30,7 @@ const mimeTypes = {
 ========================= */
 
 const server = http.createServer((req, res) => {
+
   let requestedPath = decodeURIComponent(
     req.url.split("?")[0]
   );
@@ -46,7 +54,9 @@ const server = http.createServer((req, res) => {
   }
 
   fs.readFile(filePath, (err, data) => {
+
     if (err) {
+
       res.writeHead(404, {
         "Content-Type":
           "text/plain; charset=utf-8"
@@ -80,40 +90,289 @@ const wss =
   });
 
 
-/*
- * Each connected socket stores:
- *
- * {
- *   username: "Jaffar",
- *   roomCode: "moon"
- * }
- */
+/* =========================
+   CLIENTS & ROOMS
+========================= */
 
 const clients = new Map();
 
-
-/*
- * Rooms are created automatically.
- *
- * rooms = {
- *   "moon": {
- *      clients: Set,
- *      messages: []
- *   }
- * }
- */
-
 const rooms = new Map();
-
 
 const HISTORY_DURATION =
   60 * 1000;
 
 
+/* =========================
+   STATISTICS
+========================= */
+
 /*
- * These are the only reactions
- * Bovarea currently allows.
+ * These statistics are deliberately
+ * simple and privacy-friendly.
+ *
+ * We do NOT store:
+ * - IP addresses
+ * - device IDs
+ * - phone numbers
+ * - emails
+ * - locations
  */
+
+let statistics = {
+  uniqueUsers: [],
+  totalSessions: 0,
+  totalMessages: 0,
+  uniqueRooms: []
+};
+
+
+/*
+ * Load previous statistics.
+ */
+
+function loadStatistics() {
+
+  try {
+
+    if (!fs.existsSync(STATS_FILE)) {
+      return;
+    }
+
+    const data =
+      fs.readFileSync(
+        STATS_FILE,
+        "utf8"
+      );
+
+    const parsed =
+      JSON.parse(data);
+
+    if (
+      parsed &&
+      typeof parsed === "object"
+    ) {
+
+      statistics = {
+
+        uniqueUsers:
+          Array.isArray(
+            parsed.uniqueUsers
+          )
+            ? parsed.uniqueUsers
+            : [],
+
+        totalSessions:
+          Number(
+            parsed.totalSessions
+          ) || 0,
+
+        totalMessages:
+          Number(
+            parsed.totalMessages
+          ) || 0,
+
+        uniqueRooms:
+          Array.isArray(
+            parsed.uniqueRooms
+          )
+            ? parsed.uniqueRooms
+            : []
+      };
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Could not load statistics:",
+      error.message
+    );
+  }
+}
+
+
+/*
+ * Save statistics.
+ */
+
+function saveStatistics() {
+
+  try {
+
+    fs.writeFileSync(
+      STATS_FILE,
+      JSON.stringify(
+        statistics,
+        null,
+        2
+      ),
+      "utf8"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Could not save statistics:",
+      error.message
+    );
+  }
+}
+
+
+loadStatistics();
+
+
+/*
+ * Record a user.
+ *
+ * The username is used only as a
+ * simple anonymous-ish unique marker.
+ */
+
+function recordUser(username) {
+
+  if (
+    !username ||
+    username === "Anonymous"
+  ) {
+    return;
+  }
+
+  if (
+    !statistics.uniqueUsers.includes(
+      username
+    )
+  ) {
+
+    statistics.uniqueUsers.push(
+      username
+    );
+
+    saveStatistics();
+  }
+}
+
+
+/*
+ * Record a successful session.
+ */
+
+function recordSession() {
+
+  statistics.totalSessions++;
+
+  saveStatistics();
+}
+
+
+/*
+ * Record a message.
+ */
+
+function recordMessage() {
+
+  statistics.totalMessages++;
+
+  saveStatistics();
+}
+
+
+/*
+ * Record a room.
+ */
+
+function recordRoom(roomCode) {
+
+  if (
+    !roomCode ||
+    roomCode === STATS_ROOM
+  ) {
+    return;
+  }
+
+  if (
+    !statistics.uniqueRooms.includes(
+      roomCode
+    )
+  ) {
+
+    statistics.uniqueRooms.push(
+      roomCode
+    );
+
+    saveStatistics();
+  }
+}
+
+
+/*
+ * Send the hidden statistics
+ * to one client.
+ */
+
+function sendStatistics(socket) {
+
+  const uniqueUsers =
+    statistics.uniqueUsers.length;
+
+  const totalSessions =
+    statistics.totalSessions;
+
+  const totalMessages =
+    statistics.totalMessages;
+
+  const uniqueRooms =
+    statistics.uniqueRooms.length;
+
+
+  /*
+   * The existing app.js already
+   * knows how to display system
+   * messages, so no client-side
+   * changes are required.
+   */
+
+  const lines = [
+
+    "╔════════════════════════════╗",
+
+    "        BOVAREA DATA",
+
+    "╚════════════════════════════╝",
+
+    "",
+
+    `People who have used Bovarea: ${uniqueUsers}`,
+
+    `Total sessions: ${totalSessions}`,
+
+    `Total messages sent: ${totalMessages}`,
+
+    `Rooms used: ${uniqueRooms}`,
+
+    "",
+
+    "The little machine is alive.",
+
+    "",
+
+    "╔════════════════════════════╗"
+
+  ];
+
+
+  socket.send(
+    JSON.stringify({
+      type: "system",
+      message:
+        lines.join("\n")
+    })
+  );
+}
+
+
+/* =========================
+   REACTIONS
+========================= */
 
 const allowedReactions = [
   "👍",
@@ -137,14 +396,11 @@ function normalizeRoomCode(code) {
       .slice(0, 100)
       .toLowerCase();
 
-  /*
-   * Old clients that don't send a room
-   * temporarily go into "default".
-   */
 
   if (!roomCode) {
     roomCode = "default";
   }
+
 
   return roomCode;
 }
@@ -154,24 +410,37 @@ function getOrCreateRoom(roomCode) {
 
   if (!rooms.has(roomCode)) {
 
-    rooms.set(roomCode, {
-      clients: new Set(),
-      messages: []
-    });
+    rooms.set(
+      roomCode,
+      {
+        clients: new Set(),
+        messages: []
+      }
+    );
   }
 
-  return rooms.get(roomCode);
+
+  return rooms.get(
+    roomCode
+  );
 }
 
 
 function removeEmptyRoom(roomCode) {
 
-  const room = rooms.get(roomCode);
+  const room =
+    rooms.get(roomCode);
 
   if (!room) return;
 
-  if (room.clients.size === 0) {
-    rooms.delete(roomCode);
+
+  if (
+    room.clients.size === 0
+  ) {
+
+    rooms.delete(
+      roomCode
+    );
   }
 }
 
@@ -191,11 +460,14 @@ function broadcastToRoom(
 
   if (!room) return;
 
+
   const message =
     JSON.stringify(payload);
 
 
-  for (const socket of room.clients) {
+  for (
+    const socket of room.clients
+  ) {
 
     if (
       socket.readyState ===
@@ -226,14 +498,18 @@ function getOnlineUsers(
   const users = [];
 
 
-  for (const socket of room.clients) {
+  for (
+    const socket of room.clients
+  ) {
 
     const client =
       clients.get(socket);
 
+
     if (
       client &&
-      client.username !== "Anonymous"
+      client.username !==
+        "Anonymous"
     ) {
 
       users.push(
@@ -252,7 +528,9 @@ function broadcastUserList(
 ) {
 
   const users =
-    getOnlineUsers(roomCode);
+    getOnlineUsers(
+      roomCode
+    );
 
 
   broadcastToRoom(
@@ -387,11 +665,6 @@ wss.on(
   "connection",
   (socket) => {
 
-    /*
-     * Every new connection starts
-     * without a username or room.
-     */
-
     clients.set(
       socket,
       {
@@ -462,14 +735,63 @@ wss.on(
             );
 
 
+          /*
+           * Hidden statistics room.
+           *
+           * It does NOT become a normal
+           * chat room and nobody else
+           * gets added to it.
+           */
+
+          if (
+            roomCode ===
+            STATS_ROOM
+          ) {
+
+            /*
+             * Count the person as a user
+             * if they have not appeared
+             * before.
+             */
+
+            recordUser(
+              username
+            );
+
+
+            socket.send(
+              JSON.stringify({
+                type: "room",
+                roomCode:
+                  STATS_ROOM
+              })
+            );
+
+
+            socket.send(
+              JSON.stringify({
+                type: "system",
+                message:
+                  `Welcome to the hidden Bovarea data room, ${username}.`
+              })
+            );
+
+
+            sendStatistics(
+              socket
+            );
+
+
+            return;
+          }
+
+
           const previousClient =
             clients.get(socket);
 
 
           /*
-           * If the socket was already
-           * inside another room, remove
-           * it from that room first.
+           * Leave previous room first.
            */
 
           if (
@@ -513,7 +835,7 @@ wss.on(
 
 
           /*
-           * Get or create the requested room.
+           * Get or create room.
            */
 
           const room =
@@ -537,7 +859,22 @@ wss.on(
 
 
           /*
-           * Tell the user which room
+           * Record statistics.
+           */
+
+          recordUser(
+            username
+          );
+
+          recordSession();
+
+          recordRoom(
+            roomCode
+          );
+
+
+          /*
+           * Tell user which room
            * they entered.
            */
 
@@ -559,8 +896,7 @@ wss.on(
 
 
           /*
-           * Send the room's recent
-           * one-minute history.
+           * Send history.
            */
 
           sendRecentMessages(
@@ -570,9 +906,7 @@ wss.on(
 
 
           /*
-           * Tell everyone else in
-           * this room that the user
-           * joined.
+           * Tell everyone else.
            */
 
           broadcastToRoom(
@@ -615,6 +949,25 @@ wss.on(
           }
 
 
+          /*
+           * Do not allow the hidden
+           * statistics room to become
+           * a normal chat.
+           */
+
+          if (
+            client.roomCode ===
+            STATS_ROOM
+          ) {
+
+            sendStatistics(
+              socket
+            );
+
+            return;
+          }
+
+
           const message =
             String(
               data.message || ""
@@ -643,7 +996,7 @@ wss.on(
 
           /*
            * Replies can only reference
-           * messages from the same room.
+           * messages from this room.
            */
 
           if (data.replyTo) {
@@ -692,9 +1045,11 @@ wss.on(
             );
 
 
+          recordMessage();
+
+
           /*
-           * Send to everyone ELSE
-           * in the same room.
+           * Send to everyone ELSE.
            */
 
           broadcastToRoom(
@@ -719,14 +1074,14 @@ wss.on(
 
               replyTo:
                 chatMessage.replyTo
+
             },
             socket
           );
 
 
           /*
-           * Send the message back to
-           * the sender with self=true.
+           * Send back to sender.
            */
 
           socket.send(
@@ -776,6 +1131,19 @@ wss.on(
           if (
             !client ||
             !client.roomCode
+          ) {
+            return;
+          }
+
+
+          /*
+           * Statistics room does not
+           * support reactions.
+           */
+
+          if (
+            client.roomCode ===
+            STATS_ROOM
           ) {
             return;
           }
@@ -855,13 +1223,6 @@ wss.on(
             );
 
 
-          /*
-           * Clicking an existing
-           * reaction removes it.
-           *
-           * Clicking it again adds it.
-           */
-
           if (
             existingIndex !== -1
           ) {
@@ -889,11 +1250,6 @@ wss.on(
             );
           }
 
-
-          /*
-           * Reaction updates only
-           * go to this room.
-           */
 
           broadcastToRoom(
             roomCode,
@@ -935,6 +1291,19 @@ wss.on(
         if (
           !client ||
           !client.roomCode
+        ) {
+          return;
+        }
+
+
+        /*
+         * Statistics room isn't a
+         * real persistent room.
+         */
+
+        if (
+          client.roomCode ===
+          STATS_ROOM
         ) {
           return;
         }
@@ -982,11 +1351,6 @@ wss.on(
           );
         }
 
-
-        /*
-         * Delete the room when
-         * nobody is inside it.
-         */
 
         removeEmptyRoom(
           roomCode
