@@ -137,6 +137,45 @@ function createReactionBar(messageId) {
   return bar;
 }
 
+function createActionMenu(wrapper, messageId, sender, message) {
+  const actionMenu = document.createElement("div");
+  actionMenu.className = "message-actions";
+
+  const replyButton = document.createElement("button");
+  replyButton.type = "button";
+  replyButton.className = "message-action";
+  replyButton.textContent = "↩ Reply";
+
+  replyButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+
+    setReplyTarget({
+      id: messageId,
+      sender,
+      message
+    });
+
+    wrapper.classList.remove("actions-open");
+  });
+
+  const reactButton = document.createElement("button");
+  reactButton.type = "button";
+  reactButton.className = "message-action";
+  reactButton.textContent = "React";
+
+  reactButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+
+    wrapper.classList.remove("actions-open");
+    wrapper.classList.add("reactions-open");
+  });
+
+  actionMenu.appendChild(replyButton);
+  actionMenu.appendChild(reactButton);
+
+  return actionMenu;
+}
+
 function updateReactionDisplay(wrapper, reactions) {
   let reactionsElement = wrapper.querySelector(".reactions");
 
@@ -157,7 +196,9 @@ function updateReactionDisplay(wrapper, reactions) {
     reactionElement.type = "button";
     reactionElement.textContent = `${reaction} ${users.length}`;
 
-    reactionElement.addEventListener("click", () => {
+    reactionElement.addEventListener("click", (event) => {
+      event.stopPropagation();
+
       if (!joined || socket.readyState !== WebSocket.OPEN) return;
 
       socket.send(JSON.stringify({
@@ -214,17 +255,33 @@ function addMessageToChat(
   }
 
   if (messageId) {
+    const actionMenu = createActionMenu(
+      wrapper,
+      messageId,
+      sender,
+      message
+    );
+
     const reactionBar = createReactionBar(messageId);
+
+    wrapper.appendChild(actionMenu);
     wrapper.appendChild(reactionBar);
 
-    wrapper.addEventListener("contextmenu", (event) => {
-      event.preventDefault();
+    wrapper.addEventListener("click", (event) => {
+      if (event.target.closest(".message-actions")) return;
+      if (event.target.closest(".reaction-bar")) return;
+      if (event.target.closest(".reactions")) return;
 
-      setReplyTarget({
-        id: messageId,
-        sender,
-        message
+      const allMessages = document.querySelectorAll(".message");
+
+      allMessages.forEach((otherMessage) => {
+        if (otherMessage !== wrapper) {
+          otherMessage.classList.remove("actions-open");
+          otherMessage.classList.remove("reactions-open");
+        }
       });
+
+      wrapper.classList.toggle("actions-open");
     });
   }
 
